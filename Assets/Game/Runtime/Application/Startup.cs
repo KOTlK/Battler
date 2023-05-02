@@ -43,8 +43,11 @@ namespace Game.Runtime.Application
 
             command.CharacterConfig = spawnCharacterCommand;
             command.Count = 200;
-            command.DefaultAttackMode = AttackMode.Melee;
-            command.HaveRangedAttack = false;
+            command.SquadConfig.AttackMode = AttackMode.Melee;
+            command.SquadConfig.HaveRangedAttack = false;
+            command.SquadConfig.MinColumnsCount = 20;
+            command.SquadConfig.DistanceBetweenUnits = 1.4f;
+            command.SquadConfig.MaxColumnsCount = 50;
             command.Position = Vector3.zero;
 
 
@@ -57,6 +60,8 @@ namespace Game.Runtime.Application
             systems.AddSystem(new SquadSpawnSystem(_world));
             systems.AddSystem(new CharacterSpawnSystem(_world));
             systems.AddSystem(new SelectSquadSystem(_world, _view));
+            systems.AddSystem(new RectangleFormationPreviewSystem(_world, _config));
+            systems.AddSystem(new DisablePreviewSystem(_world));
             systems.AddSystem(new RectangleMovementSystem(_world));
             systems.AddSystem(new CharacterMovementSystem(_world));
             

@@ -1,5 +1,4 @@
 ﻿using System;
-using Game.Runtime.Components.Characters;
 using Scellecs.Morpeh;
 using Unity.IL2CPP.CompilerServices;
 using UnityEngine;
@@ -10,13 +9,9 @@ namespace Game.Runtime.Components.Squads
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     [Il2CppSetOption(Option.DivideByZeroChecks, false)]
-    public struct SpawnSquadCommand : IComponent
+    public struct DisplayPreview : IComponent
     {
-        public SpawnCharacterCommand CharacterConfig;
-        public Squad SquadConfig;
-        public int Count;
-        public Vector3 Position;
+        public Vector3 StartPosition;
+        public Vector3 EndPosition;
     }
-    
-    
 }

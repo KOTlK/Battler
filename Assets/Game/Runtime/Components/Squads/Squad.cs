@@ -11,6 +11,9 @@ namespace Game.Runtime.Components.Squads
     public struct Squad : IComponent
     {
         public Entity[] Members;
+        public float DistanceBetweenUnits;
+        public int MinColumnsCount;
+        public int MaxColumnsCount;
         public bool HaveRangedAttack;
         public AttackMode AttackMode;
     }

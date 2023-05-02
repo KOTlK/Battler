@@ -1,6 +1,7 @@
 ﻿using System;
 using Scellecs.Morpeh;
 using Unity.IL2CPP.CompilerServices;
+using UnityEngine.VFX;
 
 namespace Game.Runtime.Components.Characters
 {
@@ -12,5 +13,6 @@ namespace Game.Runtime.Components.Characters
     {
         public MonoHell.View.Characters.CharacterView Prefab;
         public MonoHell.View.Characters.CharacterView Instance;
+        public VisualEffect PositionPreview;
     }
 }

@@ -33,11 +33,11 @@ namespace Game.Runtime.Systems.Squads
                 ref var formation = ref squadEntity.AddComponent<RectangleFormation>();
                 ref var squad = ref squadEntity.AddComponent<Squad>();
                 ref var command = ref entity.GetComponent<SpawnSquadCommand>();
+                var squadConfig = command.SquadConfig;
 
                 formation.MaxColumns = 20;
+                squad = squadConfig;
                 squad.Members = new Entity[command.Count];
-                squad.AttackMode = command.DefaultAttackMode;
-                squad.HaveRangedAttack = command.HaveRangedAttack;
                 command.CharacterConfig.Config.Squad = squad;
                 
                 for (var i = 0; i < command.Count; i++)

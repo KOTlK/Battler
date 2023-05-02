@@ -1,30 +1,32 @@
-﻿using Game.Runtime.Application;
+﻿using System;
+using Game.Runtime.Application;
 using Game.Runtime.Components.Characters;
-using Game.Runtime.Components.Characters.Movement;
 using Game.Runtime.Components.Squads;
 using Game.Runtime.Components.Squads.Formations;
+using Game.Runtime.MonoHell.Configs;
 using Scellecs.Morpeh;
 using Unity.IL2CPP.CompilerServices;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Game.Runtime.Systems.Squads
 {
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     [Il2CppSetOption(Option.DivideByZeroChecks, false)]
-    public class RectangleMovementSystem : UpdateSystem
+    public class RectangleFormationPreviewSystem : UpdateSystem
     {
+        private readonly Config _config;
         private Filter _squads;
-
-        private const float Indent = 1.5f;
         
-        public RectangleMovementSystem(World world) : base(world)
+        public RectangleFormationPreviewSystem(World world, Config config) : base(world)
         {
+            _config = config;
         }
 
         public override void OnAwake()
         {
-            _squads = World.Filter.With<Squad>().With<RectangleFormation>().With<MoveCommand>();
+            _squads = World.Filter.With<Squad>().With<RectangleFormation>().With<DisplayPreview>();
         }
 
         public override void OnUpdate(float deltaTime)
@@ -33,13 +35,17 @@ namespace Game.Runtime.Systems.Squads
             {
                 ref var squad = ref entity.GetComponent<Squad>();
                 ref var formation = ref entity.GetComponent<RectangleFormation>();
-                ref var command = ref entity.GetComponent<MoveCommand>();
-                var startPosition = command.Position;
-                var offset = Vector3.Cross(command.LookDirection, Vector3.down).normalized * squad.DistanceBetweenUnits;
-                var backwards = -command.LookDirection * squad.DistanceBetweenUnits;
+                ref var command = ref entity.GetComponent<DisplayPreview>();
+                var direction = command.EndPosition - command.StartPosition;
+                var lookDirection = Vector3.Cross(direction, Vector3.up).normalized;
+                var startPosition = command.StartPosition;
+                var offset = Vector3.Cross(lookDirection, Vector3.down).normalized * squad.DistanceBetweenUnits;
+                var backwards = -lookDirection * squad.DistanceBetweenUnits;
                 var previousLocalPosition = Vector3.zero;
                 var localPosition = Vector3.zero;
                 var currentColumn = 0;
+
+                formation.MaxColumns = (int)Math.Floor(Vector3.Distance(command.EndPosition, command.StartPosition) / squad.DistanceBetweenUnits);
 
                 foreach (var characterEntity in squad.Members)
                 {
@@ -48,9 +54,20 @@ namespace Game.Runtime.Systems.Squads
                     {
                         continue;
                     }
-                    
-                    ref var characterCommand = ref characterEntity.AddComponent<MoveCommand>();
-                    characterCommand.Position = localPosition + startPosition;
+
+                    ref var view = ref characterEntity.GetComponent<CharacterView>();
+                    if (view.PositionPreview == null)
+                    {
+                        var effect = Object.Instantiate(_config.PositionPreviewEffect, localPosition + startPosition,
+                            Quaternion.identity);
+                        view.PositionPreview = effect;
+                        effect.Play();
+                    }
+                    else
+                    {
+                        view.PositionPreview.transform.position = localPosition + startPosition;
+                        view.PositionPreview.Play();
+                    }
 
                     currentColumn++;
                     localPosition += offset;
@@ -62,8 +79,6 @@ namespace Game.Runtime.Systems.Squads
                         previousLocalPosition = localPosition;
                     }
                 }
-
-                entity.RemoveComponent<MoveCommand>();
             }
         }
 
