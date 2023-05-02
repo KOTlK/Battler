@@ -12,6 +12,7 @@ namespace Game.Runtime.Components.Characters
     public struct Character : IComponent
     {
         public float Speed;
+        public float Damage;
         public float MaxHealth;
         public Squad Squad;
     }

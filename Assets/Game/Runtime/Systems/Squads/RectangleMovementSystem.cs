@@ -1,5 +1,4 @@
-﻿using System;
-using Game.Runtime.Application;
+﻿using Game.Runtime.Application;
 using Game.Runtime.Components.Characters;
 using Game.Runtime.Components.Characters.Movement;
 using Game.Runtime.Components.Squads;
@@ -16,6 +15,8 @@ namespace Game.Runtime.Systems.Squads
     public class RectangleMovementSystem : UpdateSystem
     {
         private Filter _squads;
+
+        private const float Indent = 1.5f;
         
         public RectangleMovementSystem(World world) : base(world)
         {
@@ -34,7 +35,11 @@ namespace Game.Runtime.Systems.Squads
                 ref var formation = ref entity.GetComponent<RectangleFormation>();
                 ref var command = ref entity.GetComponent<MoveCommand>();
                 var startPosition = command.Position;
+                var offset = Vector3.Cross(command.LookDirection, Vector3.down).normalized * Indent;
+                var backwards = -command.LookDirection * Indent;
+                var previousLocalPosition = Vector3.zero;
                 var localPosition = Vector3.zero;
+                var currentColumn = 0;
 
                 foreach (var characterEntity in squad.Members)
                 {
@@ -46,13 +51,15 @@ namespace Game.Runtime.Systems.Squads
                     
                     ref var characterCommand = ref characterEntity.AddComponent<MoveCommand>();
                     characterCommand.Position = localPosition + startPosition;
-                    UnityEngine.Debug.DrawRay(localPosition + startPosition, Vector3.up * 5f, Color.green, 5f);
-                    
-                    localPosition.x++;
-                    if (localPosition.x >= formation.MaxColumns)
+
+                    currentColumn++;
+                    localPosition += offset;
+                    if (currentColumn >= formation.MaxColumns)
                     {
-                        localPosition.x = 0;
-                        localPosition.z--;
+                        currentColumn = 0;
+                        localPosition = previousLocalPosition;
+                        localPosition += backwards;
+                        previousLocalPosition = localPosition;
                     }
                 }
 

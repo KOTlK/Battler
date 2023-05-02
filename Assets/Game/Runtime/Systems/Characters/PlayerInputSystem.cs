@@ -40,6 +40,8 @@ namespace Game.Runtime.Systems.Characters
                     {
                         ref var command = ref entity.AddComponent<MoveCommand>();
                         command.Position = _hit.point;
+                        command.LookDirection = _camera.transform.forward;
+                        command.LookDirection.y = 0;
                     }
                 }
             }

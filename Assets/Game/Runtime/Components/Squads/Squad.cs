@@ -1,7 +1,6 @@
 ﻿using System;
 using Scellecs.Morpeh;
 using Unity.IL2CPP.CompilerServices;
-using UnityEngine;
 
 namespace Game.Runtime.Components.Squads
 {
@@ -12,6 +11,7 @@ namespace Game.Runtime.Components.Squads
     public struct Squad : IComponent
     {
         public Entity[] Members;
-        public Vector3 Position;
+        public bool HaveRangedAttack;
+        public AttackMode AttackMode;
     }
 }

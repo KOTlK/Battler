@@ -29,13 +29,15 @@ namespace Game.Runtime.Systems.Squads
             foreach (var entity in _commands)
             {
                 var squadEntity = World.CreateEntity();
-                var position = Vector3.zero;
+                var localPosition = Vector3.zero;
                 ref var formation = ref squadEntity.AddComponent<RectangleFormation>();
                 ref var squad = ref squadEntity.AddComponent<Squad>();
                 ref var command = ref entity.GetComponent<SpawnSquadCommand>();
 
-                formation.MaxColumns = 5;
+                formation.MaxColumns = 20;
                 squad.Members = new Entity[command.Count];
+                squad.AttackMode = command.DefaultAttackMode;
+                squad.HaveRangedAttack = command.HaveRangedAttack;
                 command.CharacterConfig.Config.Squad = squad;
                 
                 for (var i = 0; i < command.Count; i++)
@@ -46,10 +48,15 @@ namespace Game.Runtime.Systems.Squads
 
                     spawnCharacterCommand = command.CharacterConfig;
                     spawnCharacterCommand.TargetEntity = characterEntity;
-                    spawnCharacterCommand.Position = position;
+                    spawnCharacterCommand.Position = localPosition + command.Position;
                     squad.Members[i] = characterEntity;
 
-                    position.x++;
+                    localPosition.x++;
+                    if (localPosition.x >= formation.MaxColumns)
+                    {
+                        localPosition.x = 0;
+                        localPosition.z--;
+                    }
                 }
 
                 entity.RemoveComponent<SpawnSquadCommand>();

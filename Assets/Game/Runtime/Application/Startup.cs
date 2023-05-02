@@ -1,7 +1,9 @@
 ﻿using Game.Runtime.Components.Characters;
 using Game.Runtime.Components.Squads;
+using Game.Runtime.MonoHell.Configs;
 using Game.Runtime.MonoHell.View.Selection;
 using Game.Runtime.Systems.Characters;
+using Game.Runtime.Systems.GameCamera;
 using Game.Runtime.Systems.Squads;
 using Scellecs.Morpeh;
 using UnityEngine;
@@ -10,6 +12,7 @@ namespace Game.Runtime.Application
 {
     public class Startup : MonoBehaviour
     {
+        [SerializeField] private Config _config;
         [SerializeField] private SelectionArea _debugRect;
         [SerializeField] private Camera _camera;
         [SerializeField] private MonoHell.View.Characters.CharacterView _characterPrefab;
@@ -39,13 +42,18 @@ namespace Game.Runtime.Application
             };
 
             command.CharacterConfig = spawnCharacterCommand;
-            command.Count = 20;
+            command.Count = 200;
+            command.DefaultAttackMode = AttackMode.Melee;
+            command.HaveRangedAttack = false;
+            command.Position = Vector3.zero;
 
 
             //add initializers
             
             //add update systems
             systems.AddSystem(new PlayerInputSystem(_world));
+            systems.AddSystem(new CameraInputSystem(_world));
+            systems.AddSystem(new CameraMovementSystem(_world, _camera, _config.CameraConfig));
             systems.AddSystem(new SquadSpawnSystem(_world));
             systems.AddSystem(new CharacterSpawnSystem(_world));
             systems.AddSystem(new SelectSquadSystem(_world, _view));
