@@ -4,6 +4,7 @@ using Game.Runtime.Components.Characters.Movement;
 using Scellecs.Morpeh;
 using Unity.IL2CPP.CompilerServices;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace Game.Runtime.Systems.Characters
 {
@@ -34,6 +35,7 @@ namespace Game.Runtime.Systems.Characters
                 ref var movable = ref command.TargetEntity.AddComponent<MovableCharacter>();
                 var instance = Object.Instantiate(command.Prefab);
 
+                character.Squad = command.Config.Squad;
                 character.MaxHealth = command.Config.MaxHealth;
                 character.Speed = command.Config.Speed;
                 health.Max = command.Config.MaxHealth;

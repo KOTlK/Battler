@@ -14,4 +14,6 @@ namespace Game.Runtime.Components.Squads
         public SpawnCharacterCommand CharacterConfig;
         public int Count;
     }
+    
+    
 }

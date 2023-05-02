@@ -10,13 +10,17 @@ namespace Game.Runtime.Application
 {
     public class Startup : MonoBehaviour
     {
+        [SerializeField] private SelectionArea _debugRect;
+        [SerializeField] private Camera _camera;
         [SerializeField] private MonoHell.View.Characters.CharacterView _characterPrefab;
-        [SerializeField] private CharacterSelectionArea _view;
+        [SerializeField] private SelectionArea _view;
         
         private World _world;
         
         private void Start()
         {
+            UnityEngine.Application.targetFrameRate = 120;
+            
             _world = World.Default;
             var systems = _world.CreateSystemsGroup();
 
@@ -44,7 +48,9 @@ namespace Game.Runtime.Application
             systems.AddSystem(new PlayerInputSystem(_world));
             systems.AddSystem(new SquadSpawnSystem(_world));
             systems.AddSystem(new CharacterSpawnSystem(_world));
-            systems.AddSystem(new SelectCharacterSystem(_world, _view));
+            systems.AddSystem(new SelectSquadSystem(_world, _view));
+            systems.AddSystem(new RectangleMovementSystem(_world));
+            systems.AddSystem(new CharacterMovementSystem(_world));
             
             //add fixed update systems
             

@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using Game.Runtime.Application;
+﻿using Game.Runtime.Application;
 using Game.Runtime.Components.Characters;
 using Game.Runtime.Components.Squads;
+using Game.Runtime.Components.Squads.Formations;
 using Scellecs.Morpeh;
 using Unity.IL2CPP.CompilerServices;
 using UnityEngine;
@@ -30,10 +30,13 @@ namespace Game.Runtime.Systems.Squads
             {
                 var squadEntity = World.CreateEntity();
                 var position = Vector3.zero;
+                ref var formation = ref squadEntity.AddComponent<RectangleFormation>();
                 ref var squad = ref squadEntity.AddComponent<Squad>();
                 ref var command = ref entity.GetComponent<SpawnSquadCommand>();
 
+                formation.MaxColumns = 5;
                 squad.Members = new Entity[command.Count];
+                command.CharacterConfig.Config.Squad = squad;
                 
                 for (var i = 0; i < command.Count; i++)
                 {

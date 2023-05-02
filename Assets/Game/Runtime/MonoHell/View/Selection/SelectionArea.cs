@@ -4,12 +4,12 @@ using UnityEngine.UI.Extensions;
 
 namespace Game.Runtime.MonoHell.View.Selection
 {
-    public class CharacterSelectionArea : MonoBehaviour
+    public class SelectionArea : MonoBehaviour
     {
         [SerializeField] private Camera _camera;
         [SerializeField] private UILineRenderer _lineRenderer;
         
-        public void DrawRect(SelectArea rect)
+        public void DrawRect(Area rect)
         {
             _lineRenderer.Points = new Vector2[]
             {

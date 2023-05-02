@@ -2,29 +2,30 @@
 using Game.Runtime.Application;
 using Game.Runtime.Components.Characters;
 using Game.Runtime.Components.Characters.Movement;
+using Game.Runtime.Components.Squads;
 using Game.Runtime.MonoHell.View.Selection;
 using Scellecs.Morpeh;
 using Unity.IL2CPP.CompilerServices;
 using UnityEngine;
 
-namespace Game.Runtime.Systems.Characters
+namespace Game.Runtime.Systems.Squads
 {
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     [Il2CppSetOption(Option.DivideByZeroChecks, false)]
-    public class SelectCharacterSystem : UpdateSystem
+    public class SelectSquadSystem : UpdateSystem
     {
-        private readonly CharacterSelectionArea _view;
+        private readonly SelectionArea _view;
         private readonly Camera _camera;
         
-        private Filter _unselectedEntities;
-        private Filter _selectedEntities;
+        private Filter _unselected;
+        private Filter _selected;
         private Vector3 _startDrag = Vector3.zero;
         private float _delay = 0;
         
         private const float Threshold = 0.1f;
         
-        public SelectCharacterSystem(World world, CharacterSelectionArea view) : base(world)
+        public SelectSquadSystem(World world, SelectionArea view) : base(world)
         {
             _view = view;
             _camera = Camera.main;
@@ -32,8 +33,8 @@ namespace Game.Runtime.Systems.Characters
 
         public override void OnAwake()
         {
-            _unselectedEntities = World.Filter.With<Character>().With<MovableCharacter>().Without<Selected>();
-            _selectedEntities = World.Filter.With<Character>().With<MovableCharacter>().With<Selected>();
+            _unselected = World.Filter.With<Squad>().Without<Selected>();
+            _selected = World.Filter.With<Squad>().With<Selected>();
         }
 
         public override void OnUpdate(float deltaTime)
@@ -55,14 +56,10 @@ namespace Game.Runtime.Systems.Characters
                     
                     var endDrag = _camera.ScreenToViewportPoint(Input.mousePosition);
                     var center = _startDrag + (endDrag - _startDrag) * 0.5f;
-                    var size = new Vector3(
+                    var size = new Vector2(
                         Math.Abs(endDrag.x - _startDrag.x),
                         Math.Abs(endDrag.y - _startDrag.y));
-                    var rect = new SelectArea()
-                    {
-                        Position = center,
-                        HalfExtents = size * 0.5f
-                    };
+                    var rect = new Area(center, size * 0.5f);
 
                     _view.DrawRect(rect);
                 }
@@ -85,25 +82,33 @@ namespace Game.Runtime.Systems.Characters
 
                 var endDrag = _camera.ScreenToViewportPoint(Input.mousePosition);
                 var center = _startDrag + (endDrag - _startDrag) * 0.5f;
-                var size = new Vector3(
+                var size = new Vector2(
                     Math.Abs(endDrag.x - _startDrag.x),
                     Math.Abs(endDrag.y - _startDrag.y));
-                var rect = new SelectArea()
-                {
-                    Position = center,
-                    HalfExtents = size * 0.5f
-                };
+                var rect = new Area(center, size * 0.5f);
                 
-                foreach (var entity in _unselectedEntities)
+                foreach (var squadEntity in _unselected)
                 {
-                    ref var movable = ref entity.GetComponent<MovableCharacter>();
-                    var viewportPosition = _camera.WorldToViewportPoint(movable.Position);
-                    viewportPosition.z = 0;
-                    if (rect.Contains(viewportPosition))
+                    ref var squad = ref squadEntity.GetComponent<Squad>();
+
+                    foreach (var characterEntity in squad.Members)
                     {
-                        ref var view = ref entity.GetComponent<CharacterView>();
-                        view.Instance.Highlight();
-                        entity.AddComponent<Selected>();
+                        ref var health = ref characterEntity.GetComponent<Health>();
+
+                        if (health.Current <= 0)
+                        {
+                            continue;
+                        }
+                        
+                        ref var movableCharacter = ref characterEntity.GetComponent<MovableCharacter>();
+                        var viewportPosition = _camera.WorldToViewportPoint(movableCharacter.Position);
+                    
+                        if (rect.Contains(viewportPosition))
+                        {
+                            Select(ref squad);
+                            squadEntity.AddComponent<Selected>();
+                            break;
+                        }
                     }
                 }
 
@@ -117,12 +122,32 @@ namespace Game.Runtime.Systems.Characters
 
         }
 
+        private void Select(ref Squad squad)
+        {
+            foreach (var entity in squad.Members)
+            {
+                ref var health = ref entity.GetComponent<Health>();
+
+                if (health.Current > 0)
+                {
+                    ref var view = ref entity.GetComponent<CharacterView>();
+                    view.Instance.Highlight();
+                }
+            }
+        }
+
         private void RemoveSelection()
         {
-            foreach (var entity in _selectedEntities)
+            foreach (var entity in _selected)
             {
-                ref var view = ref entity.GetComponent<CharacterView>();
-                view.Instance.StopHighlighting();
+                ref var squad = ref entity.GetComponent<Squad>();
+                
+                foreach (var characterEntity in squad.Members)
+                {
+                    ref var view = ref characterEntity.GetComponent<CharacterView>();
+                    view.Instance.StopHighlighting();
+                }
+                
                 entity.RemoveComponent<Selected>();
             }
             _view.Clear();

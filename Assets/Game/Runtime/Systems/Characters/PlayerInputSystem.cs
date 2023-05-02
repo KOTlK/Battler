@@ -1,6 +1,7 @@
 ﻿using Game.Runtime.Application;
 using Game.Runtime.Components.Characters;
 using Game.Runtime.Components.Characters.Movement;
+using Game.Runtime.Components.Squads;
 using Scellecs.Morpeh;
 using Unity.IL2CPP.CompilerServices;
 using UnityEngine;
@@ -14,7 +15,7 @@ namespace Game.Runtime.Systems.Characters
     {
         private readonly Camera _camera;
         
-        private Filter _selectedCharacters;
+        private Filter _selectedSquads;
         private RaycastHit _hit;
 
         public PlayerInputSystem(World world) : base(world)
@@ -24,7 +25,7 @@ namespace Game.Runtime.Systems.Characters
 
         public override void OnAwake()
         {
-            _selectedCharacters = World.Filter.With<Character>().With<MovableCharacter>().With<Selected>();
+            _selectedSquads = World.Filter.With<Squad>().With<Selected>();
         }
 
         public override void OnUpdate(float deltaTime)
@@ -35,10 +36,10 @@ namespace Game.Runtime.Systems.Characters
 
                 if (Physics.Raycast(ray, out _hit))
                 {
-                    foreach (var entity in _selectedCharacters)
+                    foreach (var entity in _selectedSquads)
                     {
-                        ref var movement = ref entity.GetComponent<MovableCharacter>();
-                        movement.Agent.SetDestination(_hit.point);
+                        ref var command = ref entity.AddComponent<MoveCommand>();
+                        command.Position = _hit.point;
                     }
                 }
             }
