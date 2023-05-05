@@ -967,6 +967,8 @@ MonoBehaviour:
       MaxHeight: 50
     PositionPreviewEffect: {fileID: 5637687295269353320, guid: 14b4279f27de78b4598f9431a98abaff,
       type: 3}
+    PreviewPrefab: {fileID: 966823791397264677, guid: f362f1d59f08dc24180aa3ac970d077b,
+      type: 3}
   _debugRect: {fileID: 814953392}
   _camera: {fileID: 330585545}
   _characterPrefab: {fileID: -6557957749843513958, guid: 78ca6c20595cbf841b45680deb1189d1,

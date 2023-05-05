@@ -30,8 +30,9 @@ namespace Game.Runtime.Systems.Squads
 
                 foreach (var characterEntity in squad.Members)
                 {
-                    ref var view = ref characterEntity.GetComponent<CharacterView>();
-                    view.PositionPreview.Stop();
+                    ref var preview = ref characterEntity.GetComponent<CharacterPreview>();
+                    preview.Instance.Hide();
+                    characterEntity.RemoveComponent<EnablePreview>();
                 }
 
                 entity.RemoveComponent<DisablePreview>();

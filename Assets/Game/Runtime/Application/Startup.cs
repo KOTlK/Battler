@@ -40,12 +40,13 @@ namespace Game.Runtime.Application
             systems.AddSystem(new CameraInputSystem(_world));
             systems.AddSystem(new CameraMovementSystem(_world, _camera, _config.CameraConfig));
             systems.AddSystem(new SquadSpawnSystem(_world));
-            systems.AddSystem(new CharacterSpawnSystem(_world));
+            systems.AddSystem(new CharacterSpawnSystem(_world, _config));
             systems.AddSystem(new SelectSquadSystem(_world, _view, selectedSquads));
-            systems.AddSystem(new RectangleFormationPreviewSystem(_world, _config));
+            systems.AddSystem(new RectangleFormationPreviewSystem(_world));
             systems.AddSystem(new DisablePreviewSystem(_world));
             systems.AddSystem(new RectangleMovementSystem(_world));
             systems.AddSystem(new CharacterMovementSystem(_world));
+            systems.AddSystem(new ApplyPreviewPositions(_world));
             
             //add fixed update systems
             

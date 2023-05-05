@@ -16,17 +16,15 @@ namespace Game.Runtime.Systems.Squads
     [Il2CppSetOption(Option.DivideByZeroChecks, false)]
     public class RectangleFormationPreviewSystem : UpdateSystem
     {
-        private readonly Config _config;
         private Filter _squads;
+        private Stash<CharacterPreview> _characterPreviews;
         private Stash<Squad> _squadsStash;
         private Stash<RectangleFormation> _formations;
         private Stash<DisplayPreview> _previews;
         private Stash<Health> _healths;
-        private Stash<CharacterView> _views;
 
-        public RectangleFormationPreviewSystem(World world, Config config) : base(world)
+        public RectangleFormationPreviewSystem(World world) : base(world)
         {
-            _config = config;
         }
 
         public override void OnAwake()
@@ -36,7 +34,7 @@ namespace Game.Runtime.Systems.Squads
             _formations = World.GetStash<RectangleFormation>();
             _previews = World.GetStash<DisplayPreview>();
             _healths = World.GetStash<Health>();
-            _views = World.GetStash<CharacterView>();
+            _characterPreviews = World.GetStash<CharacterPreview>();
         }
 
         public override void OnUpdate(float deltaTime)
@@ -62,19 +60,13 @@ namespace Game.Runtime.Systems.Squads
                         continue;
                     }
 
-                    ref var view = ref _views.Get(characterEntity);
-                    if (view.PositionPreview == null)
+                    ref var preview = ref _characterPreviews.Get(characterEntity);
+                    characterEntity.SetComponent(new EnablePreview());
+                    if (preview.Instance.Hidden)
                     {
-                        var effect = Object.Instantiate(_config.PositionPreviewEffect, localPosition + startPosition,
-                            Quaternion.identity);
-                        view.PositionPreview = effect;
-                        effect.Play();
+                        preview.Instance.Show();
                     }
-                    else
-                    {
-                        view.PositionPreview.transform.position = localPosition + startPosition;
-                        view.PositionPreview.Play();
-                    }
+                    preview.Position = localPosition + startPosition;
 
                     currentColumn++;
                     localPosition += offset;
