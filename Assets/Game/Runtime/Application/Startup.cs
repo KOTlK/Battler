@@ -27,39 +27,21 @@ namespace Game.Runtime.Application
             _world = World.Default;
             var systems = _world.CreateSystemsGroup();
 
-            var spawnEntity = _world.CreateEntity();
+            SpawnSquad(200, Vector3.zero);
+            SpawnSquad(100, new Vector3(25, 0, 0));
+            SpawnSquad(100, new Vector3(0, 0, 15));
 
-            ref var command = ref spawnEntity.AddComponent<SpawnSquadCommand>();
-            var spawnCharacterCommand = new SpawnCharacterCommand
-            {
-                Prefab = _characterPrefab,
-                Config = new Character()
-                {
-                    MaxHealth = 100,
-                    Speed = 5f
-                },
-                TargetEntity = _world.CreateEntity()
-            };
-
-            command.CharacterConfig = spawnCharacterCommand;
-            command.Count = 200;
-            command.SquadConfig.AttackMode = AttackMode.Melee;
-            command.SquadConfig.HaveRangedAttack = false;
-            command.SquadConfig.MinColumnsCount = 20;
-            command.SquadConfig.DistanceBetweenUnits = 1.4f;
-            command.SquadConfig.MaxColumnsCount = 50;
-            command.Position = Vector3.zero;
-
+            SelectedSquads selectedSquads;
 
             //add initializers
             
             //add update systems
-            systems.AddSystem(new PlayerInputSystem(_world));
+            systems.AddSystem(new SquadsPlacementSystem(_world, selectedSquads = new SelectedSquads()));
             systems.AddSystem(new CameraInputSystem(_world));
             systems.AddSystem(new CameraMovementSystem(_world, _camera, _config.CameraConfig));
             systems.AddSystem(new SquadSpawnSystem(_world));
             systems.AddSystem(new CharacterSpawnSystem(_world));
-            systems.AddSystem(new SelectSquadSystem(_world, _view));
+            systems.AddSystem(new SelectSquadSystem(_world, _view, selectedSquads));
             systems.AddSystem(new RectangleFormationPreviewSystem(_world, _config));
             systems.AddSystem(new DisablePreviewSystem(_world));
             systems.AddSystem(new RectangleMovementSystem(_world));
@@ -90,6 +72,32 @@ namespace Game.Runtime.Application
         {
             _world.LateUpdate(Time.deltaTime);
             _world.CleanupUpdate(Time.deltaTime);
+        }
+
+        private void SpawnSquad(int count, Vector3 position)
+        {
+            var spawnEntity = _world.CreateEntity();
+
+            ref var command = ref spawnEntity.AddComponent<SpawnSquadCommand>();
+            var spawnCharacterCommand = new SpawnCharacterCommand
+            {
+                Prefab = _characterPrefab,
+                Config = new Character()
+                {
+                    MaxHealth = 100,
+                    Speed = 5f
+                },
+                TargetEntity = _world.CreateEntity()
+            };
+
+            command.CharacterConfig = spawnCharacterCommand;
+            command.Count = count;
+            command.SquadConfig.AttackMode = AttackMode.Melee;
+            command.SquadConfig.HaveRangedAttack = false;
+            command.SquadConfig.MinColumnsCount = 10;
+            command.SquadConfig.DistanceBetweenUnits = 1.4f;
+            command.SquadConfig.MaxColumnsCount = 25;
+            command.Position = position;
         }
     }
 }

@@ -16,6 +16,7 @@ namespace Game.Runtime.Systems.Squads
     public class SelectSquadSystem : UpdateSystem
     {
         private readonly SelectionArea _view;
+        private readonly SelectedSquads _selectedSquads;
         private readonly Camera _camera;
         
         private Filter _unselected;
@@ -25,9 +26,10 @@ namespace Game.Runtime.Systems.Squads
         
         private const float Threshold = 0.1f;
         
-        public SelectSquadSystem(World world, SelectionArea view) : base(world)
+        public SelectSquadSystem(World world, SelectionArea view, SelectedSquads selectedSquads) : base(world)
         {
             _view = view;
+            _selectedSquads = selectedSquads;
             _camera = Camera.main;
         }
 
@@ -72,6 +74,8 @@ namespace Game.Runtime.Systems.Squads
             if (Input.GetKeyUp(KeyCode.Mouse0))
             {
                 RemoveSelection();
+                _selectedSquads.MinDistance = 0;
+                _selectedSquads.Squads.Clear();
                 
                 if (_delay < Threshold)
                 {
@@ -107,6 +111,8 @@ namespace Game.Runtime.Systems.Squads
                         {
                             Select(ref squad);
                             squadEntity.AddComponent<Selected>();
+                            _selectedSquads.MinDistance += squad.DistanceBetweenUnits * squad.MinColumnsCount;
+                            _selectedSquads.Squads.Add(squad);
                             break;
                         }
                     }

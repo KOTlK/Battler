@@ -11,7 +11,7 @@ namespace Game.Runtime.Components.Squads
     [Il2CppSetOption(Option.DivideByZeroChecks, false)]
     public struct DisplayPreview : IComponent
     {
+        public Vector3 Forward;
         public Vector3 StartPosition;
-        public Vector3 EndPosition;
     }
 }

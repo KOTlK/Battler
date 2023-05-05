@@ -18,7 +18,12 @@ namespace Game.Runtime.Systems.Squads
     {
         private readonly Config _config;
         private Filter _squads;
-        
+        private Stash<Squad> _squadsStash;
+        private Stash<RectangleFormation> _formations;
+        private Stash<DisplayPreview> _previews;
+        private Stash<Health> _healths;
+        private Stash<CharacterView> _views;
+
         public RectangleFormationPreviewSystem(World world, Config config) : base(world)
         {
             _config = config;
@@ -27,17 +32,21 @@ namespace Game.Runtime.Systems.Squads
         public override void OnAwake()
         {
             _squads = World.Filter.With<Squad>().With<RectangleFormation>().With<DisplayPreview>();
+            _squadsStash = World.GetStash<Squad>();
+            _formations = World.GetStash<RectangleFormation>();
+            _previews = World.GetStash<DisplayPreview>();
+            _healths = World.GetStash<Health>();
+            _views = World.GetStash<CharacterView>();
         }
 
         public override void OnUpdate(float deltaTime)
         {
             foreach (var entity in _squads)
             {
-                ref var squad = ref entity.GetComponent<Squad>();
-                ref var formation = ref entity.GetComponent<RectangleFormation>();
-                ref var command = ref entity.GetComponent<DisplayPreview>();
-                var direction = command.EndPosition - command.StartPosition;
-                var lookDirection = Vector3.Cross(direction, Vector3.up).normalized;
+                ref var squad = ref _squadsStash.Get(entity);
+                ref var formation = ref _formations.Get(entity);
+                ref var command = ref _previews.Get(entity);
+                var lookDirection = command.Forward;
                 var startPosition = command.StartPosition;
                 var offset = Vector3.Cross(lookDirection, Vector3.down).normalized * squad.DistanceBetweenUnits;
                 var backwards = -lookDirection * squad.DistanceBetweenUnits;
@@ -45,17 +54,15 @@ namespace Game.Runtime.Systems.Squads
                 var localPosition = Vector3.zero;
                 var currentColumn = 0;
 
-                formation.MaxColumns = (int)Math.Floor(Vector3.Distance(command.EndPosition, command.StartPosition) / squad.DistanceBetweenUnits);
-
                 foreach (var characterEntity in squad.Members)
                 {
-                    ref var health = ref characterEntity.GetComponent<Health>();
+                    ref var health = ref _healths.Get(characterEntity);
                     if (health.Current <= 0)
                     {
                         continue;
                     }
 
-                    ref var view = ref characterEntity.GetComponent<CharacterView>();
+                    ref var view = ref _views.Get(characterEntity);
                     if (view.PositionPreview == null)
                     {
                         var effect = Object.Instantiate(_config.PositionPreviewEffect, localPosition + startPosition,

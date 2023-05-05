@@ -32,6 +32,7 @@ namespace Game.Runtime.Systems.Characters
 
                 if (movable.Position != command.Position)
                 {
+                    movable.Agent.speed = movable.Speed;
                     movable.Agent.SetDestination(command.Position);
                     entity.RemoveComponent<MoveCommand>();
                 }
