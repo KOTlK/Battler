@@ -48,7 +48,6 @@ namespace Game.Runtime.Systems.Characters
                 character.Speed = command.Config.Speed;
                 health.Max = command.Config.MaxHealth;
                 health.Current = health.Max;
-                view.Prefab = command.Prefab;
                 view.Instance = instance;
                 view.Instance.transform.position = command.Position;
                 movable.Speed = command.Config.Speed;

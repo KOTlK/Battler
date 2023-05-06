@@ -151,7 +151,7 @@ namespace Game.Runtime.Systems.Squads
                         formation.MaxColumns = squad.MinColumnsCount;
 
                         entity.RemoveComponent<DisplayPreview>();
-                        entity.AddComponent<DisablePreview>();
+                        entity.SetComponent(new DisablePreview());
                         position += right * squadLength + right * DistanceBetweenSquads;
                     }
                 }

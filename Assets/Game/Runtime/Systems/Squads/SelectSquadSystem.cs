@@ -35,7 +35,7 @@ namespace Game.Runtime.Systems.Squads
 
         public override void OnAwake()
         {
-            _unselected = World.Filter.With<Squad>().Without<Selected>();
+            _unselected = World.Filter.With<Squad>().Without<Selected>().Without<Dead>();
             _selected = World.Filter.With<Squad>().With<Selected>();
         }
 
@@ -95,15 +95,8 @@ namespace Game.Runtime.Systems.Squads
                 {
                     ref var squad = ref squadEntity.GetComponent<Squad>();
 
-                    foreach (var characterEntity in squad.Members)
+                    foreach (var characterEntity in squad.AliveMembers)
                     {
-                        ref var health = ref characterEntity.GetComponent<Health>();
-
-                        if (health.Current <= 0)
-                        {
-                            continue;
-                        }
-                        
                         ref var movableCharacter = ref characterEntity.GetComponent<MovableCharacter>();
                         var viewportPosition = _camera.WorldToViewportPoint(movableCharacter.Position);
                     
@@ -130,15 +123,10 @@ namespace Game.Runtime.Systems.Squads
 
         private void Select(ref Squad squad)
         {
-            foreach (var entity in squad.Members)
+            foreach (var entity in squad.AliveMembers)
             {
-                ref var health = ref entity.GetComponent<Health>();
-
-                if (health.Current > 0)
-                {
-                    ref var view = ref entity.GetComponent<CharacterView>();
-                    view.Instance.Highlight();
-                }
+                ref var view = ref entity.GetComponent<CharacterView>();
+                view.Instance.Highlight();
             }
         }
 
@@ -148,7 +136,7 @@ namespace Game.Runtime.Systems.Squads
             {
                 ref var squad = ref entity.GetComponent<Squad>();
                 
-                foreach (var characterEntity in squad.Members)
+                foreach (var characterEntity in squad.AllMembers)
                 {
                     ref var view = ref characterEntity.GetComponent<CharacterView>();
                     view.Instance.StopHighlighting();

@@ -3,6 +3,7 @@ using Game.Runtime.Components.Squads;
 using Game.Runtime.MonoHell.Configs;
 using Game.Runtime.MonoHell.View.Selection;
 using Game.Runtime.Systems.Characters;
+using Game.Runtime.Systems.Debug;
 using Game.Runtime.Systems.GameCamera;
 using Game.Runtime.Systems.Squads;
 using Scellecs.Morpeh;
@@ -17,6 +18,7 @@ namespace Game.Runtime.Application
         [SerializeField] private Camera _camera;
         [SerializeField] private MonoHell.View.Characters.CharacterView _characterPrefab;
         [SerializeField] private SelectionArea _view;
+        [SerializeField] private DebugDamage _debugDamageView;
         
         private World _world;
         
@@ -42,10 +44,12 @@ namespace Game.Runtime.Application
             systems.AddSystem(new SquadSpawnSystem(_world));
             systems.AddSystem(new CharacterSpawnSystem(_world, _config));
             systems.AddSystem(new SelectSquadSystem(_world, _view, selectedSquads));
+            systems.AddSystem(new DebugDamageSystem(_world, _debugDamageView));
             systems.AddSystem(new RectangleFormationPreviewSystem(_world));
             systems.AddSystem(new DisablePreviewSystem(_world));
             systems.AddSystem(new RectangleMovementSystem(_world));
             systems.AddSystem(new CharacterMovementSystem(_world));
+            systems.AddSystem(new SquadDamageSystem(_world));
             systems.AddSystem(new ApplyPreviewPositions(_world));
             
             //add fixed update systems

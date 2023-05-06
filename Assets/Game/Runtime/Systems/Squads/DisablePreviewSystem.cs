@@ -28,11 +28,14 @@ namespace Game.Runtime.Systems.Squads
             {
                 ref var squad = ref entity.GetComponent<Squad>();
 
-                foreach (var characterEntity in squad.Members)
+                foreach (var characterEntity in squad.AllMembers)
                 {
-                    ref var preview = ref characterEntity.GetComponent<CharacterPreview>();
-                    preview.Instance.Hide();
-                    characterEntity.RemoveComponent<EnablePreview>();
+                    if (characterEntity.Has<EnablePreview>())
+                    {
+                        ref var preview = ref characterEntity.GetComponent<CharacterPreview>();
+                        preview.Instance.Hide();
+                        characterEntity.RemoveComponent<EnablePreview>();
+                    }
                 }
 
                 entity.RemoveComponent<DisablePreview>();

@@ -18,5 +18,12 @@ namespace Game.Runtime.MonoHell.View.Characters
         {
             _body.layer = LayerMask.NameToLayer("NoOutline");
         }
+
+        public void PlayDeathAnimation()
+        {
+            _body.layer = LayerMask.NameToLayer("NoOutline");
+            gameObject.SetActive(false);
+            transform.Rotate(Vector3.forward, 90f);
+        }
     }
 }

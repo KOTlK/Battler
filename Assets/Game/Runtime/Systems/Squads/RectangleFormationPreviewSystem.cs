@@ -52,14 +52,8 @@ namespace Game.Runtime.Systems.Squads
                 var localPosition = Vector3.zero;
                 var currentColumn = 0;
 
-                foreach (var characterEntity in squad.Members)
+                foreach (var characterEntity in squad.AliveMembers)
                 {
-                    ref var health = ref _healths.Get(characterEntity);
-                    if (health.Current <= 0)
-                    {
-                        continue;
-                    }
-
                     ref var preview = ref _characterPreviews.Get(characterEntity);
                     characterEntity.SetComponent(new EnablePreview());
                     if (preview.Instance.Hidden)

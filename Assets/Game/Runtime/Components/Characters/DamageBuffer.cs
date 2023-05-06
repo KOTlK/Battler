@@ -1,5 +1,6 @@
 ﻿using System;
 using Scellecs.Morpeh;
+using Unity.Collections;
 using Unity.IL2CPP.CompilerServices;
 
 namespace Game.Runtime.Components.Characters
@@ -8,8 +9,13 @@ namespace Game.Runtime.Components.Characters
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     [Il2CppSetOption(Option.DivideByZeroChecks, false)]
-    public struct CharacterView : IComponent
+    public struct DamageBuffer : IComponent, IDisposable
     {
-        public MonoHell.View.Characters.CharacterView Instance;
+        public NativeQueue<float> Buffer;
+
+        public void Dispose()
+        {
+            Buffer.Dispose();
+        }
     }
 }

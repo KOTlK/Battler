@@ -41,14 +41,8 @@ namespace Game.Runtime.Systems.Squads
                 var localPosition = Vector3.zero;
                 var currentColumn = 0;
 
-                foreach (var characterEntity in squad.Members)
+                foreach (var characterEntity in squad.AliveMembers)
                 {
-                    ref var health = ref characterEntity.GetComponent<Health>();
-                    if (health.Current <= 0)
-                    {
-                        continue;
-                    }
-                    
                     ref var characterCommand = ref characterEntity.AddComponent<MoveCommand>();
                     characterCommand.Position = localPosition + startPosition;
 

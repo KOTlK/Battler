@@ -2,14 +2,13 @@
 using Scellecs.Morpeh;
 using Unity.IL2CPP.CompilerServices;
 
-namespace Game.Runtime.Components.Characters
+namespace Game.Runtime.Components.Squads
 {
     [Serializable]
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     [Il2CppSetOption(Option.DivideByZeroChecks, false)]
-    public struct CharacterView : IComponent
+    public struct Dead : IComponent
     {
-        public MonoHell.View.Characters.CharacterView Instance;
     }
 }
