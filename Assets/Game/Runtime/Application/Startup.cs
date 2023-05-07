@@ -14,11 +14,11 @@ namespace Game.Runtime.Application
     public class Startup : MonoBehaviour
     {
         [SerializeField] private Config _config;
-        [SerializeField] private SelectionArea _debugRect;
         [SerializeField] private Camera _camera;
         [SerializeField] private MonoHell.View.Characters.CharacterView _characterPrefab;
         [SerializeField] private SelectionArea _view;
         [SerializeField] private DebugDamage _debugDamageView;
+        [SerializeField] private SpawnSquadCommand[] _squadsToSpawn;
         
         private World _world;
         
@@ -29,9 +29,13 @@ namespace Game.Runtime.Application
             _world = World.Default;
             var systems = _world.CreateSystemsGroup();
 
-            SpawnSquad(200, Vector3.zero);
-            SpawnSquad(100, new Vector3(25, 0, 0));
-            SpawnSquad(100, new Vector3(0, 0, 15));
+            foreach (var squadSpawnCommand in _squadsToSpawn)
+            {
+                var spawnEntity = _world.CreateEntity();
+
+                ref var command = ref spawnEntity.AddComponent<SpawnSquadCommand>();
+                command = squadSpawnCommand;
+            }
 
             SelectedSquads selectedSquads;
 
@@ -77,32 +81,6 @@ namespace Game.Runtime.Application
         {
             _world.LateUpdate(Time.deltaTime);
             _world.CleanupUpdate(Time.deltaTime);
-        }
-
-        private void SpawnSquad(int count, Vector3 position)
-        {
-            var spawnEntity = _world.CreateEntity();
-
-            ref var command = ref spawnEntity.AddComponent<SpawnSquadCommand>();
-            var spawnCharacterCommand = new SpawnCharacterCommand
-            {
-                Prefab = _characterPrefab,
-                Config = new Character()
-                {
-                    MaxHealth = 100,
-                    Speed = 5f
-                },
-                TargetEntity = _world.CreateEntity()
-            };
-
-            command.CharacterConfig = spawnCharacterCommand;
-            command.Count = count;
-            command.SquadConfig.AttackMode = AttackMode.Melee;
-            command.SquadConfig.HaveRangedAttack = false;
-            command.SquadConfig.MinColumnsCount = 10;
-            command.SquadConfig.DistanceBetweenUnits = 1.4f;
-            command.SquadConfig.MaxColumnsCount = 25;
-            command.Position = position;
         }
     }
 }

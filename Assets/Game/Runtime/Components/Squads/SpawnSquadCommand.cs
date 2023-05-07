@@ -1,8 +1,8 @@
 ﻿using System;
-using Game.Runtime.Components.Characters;
 using Scellecs.Morpeh;
 using Unity.IL2CPP.CompilerServices;
 using UnityEngine;
+using CharacterView = Game.Runtime.MonoHell.View.Characters.CharacterView;
 
 namespace Game.Runtime.Components.Squads
 {
@@ -12,8 +12,15 @@ namespace Game.Runtime.Components.Squads
     [Il2CppSetOption(Option.DivideByZeroChecks, false)]
     public struct SpawnSquadCommand : IComponent
     {
-        public SpawnCharacterCommand CharacterConfig;
-        public Squad SquadConfig;
+        public CharacterView CharacterPrefab;
+        public float CharacterHealth;
+        public float CharactersSpeed;
+        public float CharactersDamage;
+        public float DistanceBetweenUnits;
+        public int MinColumnsCount;
+        public int MaxColumnsCount;
+        public bool HaveRangedAttack;
+        public AttackMode AttackMode;
         public int Count;
         public Vector3 Position;
     }

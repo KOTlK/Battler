@@ -201,8 +201,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
-  m_LocalRotation: {x: -0.21606399, y: -0.015529223, z: 0.0034199038, w: -0.9762497}
-  m_LocalPosition: {x: -6.4774704, y: 31.934296, z: -43.627747}
+  m_LocalRotation: {x: -0.3370401, y: -0.013564628, z: 0.0048445878, w: -0.9413801}
+  m_LocalPosition: {x: -93.15624, y: 32.798172, z: 75.22275}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1365,12 +1365,48 @@ MonoBehaviour:
       type: 3}
     PreviewPrefab: {fileID: 966823791397264677, guid: f362f1d59f08dc24180aa3ac970d077b,
       type: 3}
-  _debugRect: {fileID: 814953392}
   _camera: {fileID: 330585545}
   _characterPrefab: {fileID: -6557957749843513958, guid: 78ca6c20595cbf841b45680deb1189d1,
     type: 3}
   _view: {fileID: 1254936327}
   _debugDamageView: {fileID: 965207194}
+  _squadsToSpawn:
+  - CharacterPrefab: {fileID: -6557957749843513958, guid: 78ca6c20595cbf841b45680deb1189d1,
+      type: 3}
+    CharacterHealth: 100
+    CharactersSpeed: 5
+    CharactersDamage: 15
+    DistanceBetweenUnits: 1.4
+    MinColumnsCount: 15
+    MaxColumnsCount: 25
+    HaveRangedAttack: 0
+    AttackMode: 0
+    Count: 200
+    Position: {x: -115, y: 0, z: 115}
+  - CharacterPrefab: {fileID: -6557957749843513958, guid: 78ca6c20595cbf841b45680deb1189d1,
+      type: 3}
+    CharacterHealth: 150
+    CharactersSpeed: 4
+    CharactersDamage: 20
+    DistanceBetweenUnits: 1.7
+    MinColumnsCount: 10
+    MaxColumnsCount: 20
+    HaveRangedAttack: 0
+    AttackMode: 0
+    Count: 100
+    Position: {x: -90, y: 0, z: 115}
+  - CharacterPrefab: {fileID: -6557957749843513958, guid: 78ca6c20595cbf841b45680deb1189d1,
+      type: 3}
+    CharacterHealth: 250
+    CharactersSpeed: 10
+    CharactersDamage: 23
+    DistanceBetweenUnits: 2
+    MinColumnsCount: 10
+    MaxColumnsCount: 15
+    HaveRangedAttack: 0
+    AttackMode: 0
+    Count: 50
+    Position: {x: -75, y: 0, z: 115}
 --- !u!4 &1974575856
 Transform:
   m_ObjectHideFlags: 0
@@ -1521,6 +1557,37 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2009925097}
   m_CullTransparentMesh: 1
+--- !u!1 &2054611669
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2054611670}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2054611670
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2054611669}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -115.7, y: 0.593, z: 115.7}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 7
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2091017573
 GameObject:
   m_ObjectHideFlags: 0

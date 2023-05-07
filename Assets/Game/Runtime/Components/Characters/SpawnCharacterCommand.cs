@@ -12,7 +12,9 @@ namespace Game.Runtime.Components.Characters
     public struct SpawnCharacterCommand : IComponent
     {
         public Entity TargetEntity;
-        public Character Config;
+        public float Speed;
+        public float Damage;
+        public float MaxHealth;
         public Vector3 Position;
         public MonoHell.View.Characters.CharacterView Prefab;
     }

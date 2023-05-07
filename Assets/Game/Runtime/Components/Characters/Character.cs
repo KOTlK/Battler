@@ -1,5 +1,4 @@
 ﻿using System;
-using Game.Runtime.Components.Squads;
 using Scellecs.Morpeh;
 using Unity.IL2CPP.CompilerServices;
 
@@ -14,6 +13,5 @@ namespace Game.Runtime.Components.Characters
         public float Speed;
         public float Damage;
         public float MaxHealth;
-        public Squad Squad;
     }
 }

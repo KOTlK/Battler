@@ -43,14 +43,13 @@ namespace Game.Runtime.Systems.Characters
                 preview.Transform = previewInstance.transform;
                 preview.Position = command.Position;
                 preview.Instance = previewInstance;
-                character.Squad = command.Config.Squad;
-                character.MaxHealth = command.Config.MaxHealth;
-                character.Speed = command.Config.Speed;
-                health.Max = command.Config.MaxHealth;
+                character.MaxHealth = command.MaxHealth;
+                character.Speed = command.Speed;
+                health.Max = command.MaxHealth;
                 health.Current = health.Max;
                 view.Instance = instance;
                 view.Instance.transform.position = command.Position;
-                movable.Speed = command.Config.Speed;
+                movable.Speed = command.Speed;
                 movable.Agent = instance.NavMeshAgent;
 
                 entity.RemoveComponent<SpawnCharacterCommand>();

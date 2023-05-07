@@ -36,16 +36,18 @@ namespace Game.Runtime.Systems.Squads
                 ref var squad = ref squadEntity.AddComponent<Squad>();
                 ref var damageBuffer = ref squadEntity.AddComponent<DamageBuffer>();
                 ref var command = ref entity.GetComponent<SpawnSquadCommand>();
-                var squadConfig = command.SquadConfig;
 
-                formation.MaxColumns = 20;
+                formation.MaxColumns = command.MinColumnsCount;
                 damageBuffer.Buffer = new NativeQueue<float>(Allocator.Persistent);
-                squad = squadConfig;
                 squad.AliveMembers = new List<Entity>();
                 squad.DeadMembers = new List<Entity>();
                 squad.AllMembers = new Entity[command.Count];
                 squad.TotalCount = command.Count;
-                command.CharacterConfig.Config.Squad = squad;
+                squad.MinColumnsCount = command.MinColumnsCount;
+                squad.MaxColumnsCount = command.MaxColumnsCount;
+                squad.AttackMode = command.AttackMode;
+                squad.HaveRangedAttack = command.HaveRangedAttack;
+                squad.DistanceBetweenUnits = command.DistanceBetweenUnits;
                 
                 for (var i = 0; i < command.Count; i++)
                 {
@@ -53,8 +55,11 @@ namespace Game.Runtime.Systems.Squads
                     var spawnCharacterEntity = World.CreateEntity();
                     ref var spawnCharacterCommand = ref spawnCharacterEntity.AddComponent<SpawnCharacterCommand>();
 
-                    spawnCharacterCommand = command.CharacterConfig;
                     spawnCharacterCommand.TargetEntity = characterEntity;
+                    spawnCharacterCommand.Prefab = command.CharacterPrefab;
+                    spawnCharacterCommand.MaxHealth = command.CharacterHealth;
+                    spawnCharacterCommand.Damage = command.CharactersDamage;
+                    spawnCharacterCommand.Speed = command.CharactersSpeed;
                     spawnCharacterCommand.Position = localPosition + command.Position;
                     squad.AliveMembers.Add(characterEntity);
                     squad.AllMembers[i] = characterEntity;
