@@ -1,13 +1,10 @@
-﻿using System;
-using Game.Runtime.Application;
+﻿using Game.Runtime.Application;
 using Game.Runtime.Components.Characters;
 using Game.Runtime.Components.Squads;
 using Game.Runtime.Components.Squads.Formations;
-using Game.Runtime.MonoHell.Configs;
 using Scellecs.Morpeh;
 using Unity.IL2CPP.CompilerServices;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace Game.Runtime.Systems.Squads
 {
@@ -19,9 +16,8 @@ namespace Game.Runtime.Systems.Squads
         private Filter _squads;
         private Stash<CharacterPreview> _characterPreviews;
         private Stash<Squad> _squadsStash;
-        private Stash<RectangleFormation> _formations;
+        private Stash<Formation> _formations;
         private Stash<DisplayPreview> _previews;
-        private Stash<Health> _healths;
 
         public RectangleFormationPreviewSystem(World world) : base(world)
         {
@@ -29,11 +25,10 @@ namespace Game.Runtime.Systems.Squads
 
         public override void OnAwake()
         {
-            _squads = World.Filter.With<Squad>().With<RectangleFormation>().With<DisplayPreview>();
+            _squads = World.Filter.With<Squad>().With<Formation>().With<DisplayPreview>();
             _squadsStash = World.GetStash<Squad>();
-            _formations = World.GetStash<RectangleFormation>();
+            _formations = World.GetStash<Formation>();
             _previews = World.GetStash<DisplayPreview>();
-            _healths = World.GetStash<Health>();
             _characterPreviews = World.GetStash<CharacterPreview>();
         }
 
@@ -42,7 +37,6 @@ namespace Game.Runtime.Systems.Squads
             foreach (var entity in _squads)
             {
                 ref var squad = ref _squadsStash.Get(entity);
-                ref var formation = ref _formations.Get(entity);
                 ref var command = ref _previews.Get(entity);
                 var lookDirection = command.Forward;
                 var startPosition = command.StartPosition;
@@ -64,7 +58,7 @@ namespace Game.Runtime.Systems.Squads
 
                     currentColumn++;
                     localPosition += offset;
-                    if (currentColumn >= formation.MaxColumns)
+                    if (currentColumn >= command.MaxColumns)
                     {
                         currentColumn = 0;
                         localPosition = previousLocalPosition;

@@ -66,18 +66,18 @@ namespace Game.Runtime.Systems.Squads
                     foreach (var entity in _selected)
                     {
                         ref var squad = ref entity.GetComponent<Squad>();
-                        ref var rectangle = ref entity.GetComponent<RectangleFormation>();
                         var squadLength = squad.MinColumnsCount * squad.DistanceBetweenUnits;
                         var normalizedDirection = direction.normalized;
+                        var maxColumns = squad.MinColumnsCount;
 
                         if (distancePerSquad < squadLength)
                         {
-                            rectangle.MaxColumns = squad.MinColumnsCount;
-                            
                             entity.SetComponent(new DisplayPreview()
                             {
                                 Forward = forward,
-                                StartPosition = position
+                                StartPosition = position,
+                                FormationType = FormationType.Rectangle,
+                                MaxColumns = maxColumns
                             });
                             
                             position += (normalizedDirection * squadLength) +
@@ -90,24 +90,26 @@ namespace Game.Runtime.Systems.Squads
 
                             if (unitsCapacity == 0)
                             {
-                                rectangle.MaxColumns = squad.MinColumnsCount;
+                                maxColumns = squad.MinColumnsCount;
                             } 
                             else if (unitsCapacity + squad.MinColumnsCount >= squad.MaxColumnsCount)
                             {
-                                rectangle.MaxColumns = squad.MaxColumnsCount;
+                                maxColumns = squad.MaxColumnsCount;
                             }
                             else
                             {
-                                rectangle.MaxColumns = squad.MinColumnsCount + unitsCapacity;
+                                maxColumns = squad.MinColumnsCount + unitsCapacity;
                             }
 
-                            var totalLength = squad.DistanceBetweenUnits * rectangle.MaxColumns;
+                            var totalLength = squad.DistanceBetweenUnits * maxColumns;
 
                             
                             entity.SetComponent(new DisplayPreview()
                             {
                                 Forward = forward,
-                                StartPosition = position
+                                StartPosition = position,
+                                MaxColumns = maxColumns,
+                                FormationType = FormationType.Rectangle
                             });
                             
                             position += normalizedDirection * totalLength + normalizedDirection * DistanceBetweenSquads;
@@ -124,9 +126,18 @@ namespace Game.Runtime.Systems.Squads
                     {
                         ref var command = ref entity.AddComponent<MoveCommand>();
                         ref var preview = ref entity.GetComponent<DisplayPreview>();
+                        ref var formation = ref entity.GetComponent<Formation>();
 
                         command.Position = preview.StartPosition;
                         command.LookDirection = preview.Forward;
+
+                        if (formation.MaxColumns != preview.MaxColumns)
+                        {
+                            ref var rebuildCommand = ref entity.AddComponent<RebuildFormation>();
+                            rebuildCommand.FormationType = FormationType.Rectangle;
+                            rebuildCommand.Columns = preview.MaxColumns;
+                            formation.Forward = preview.Forward;
+                        }
 
                         entity.RemoveComponent<DisplayPreview>();
                         entity.AddComponent<DisablePreview>();
@@ -136,19 +147,24 @@ namespace Game.Runtime.Systems.Squads
                 {
                     var forward = _camera.transform.forward;
                     var right = Vector3.Cross(forward, Vector3.down).normalized;
-                    forward.y = 0;
                     var position = _startDragPoint;
+                    forward.y = 0;
 
                     foreach (var entity in _selected)
                     {
                         ref var command = ref entity.AddComponent<MoveCommand>();
+                        ref var rebuildCommand = ref entity.AddComponent<RebuildFormation>();
                         ref var squad = ref entity.GetComponent<Squad>();
-                        ref var formation = ref entity.GetComponent<RectangleFormation>();
+                        ref var formation = ref entity.GetComponent<Formation>();
                         var squadLength = squad.MinColumnsCount * squad.DistanceBetweenUnits;
 
+                        formation.Forward = forward;
+                        
                         command.Position = position;
                         command.LookDirection = forward;
-                        formation.MaxColumns = squad.MinColumnsCount;
+
+                        rebuildCommand.FormationType = FormationType.Rectangle;
+                        rebuildCommand.Columns = squad.MinColumnsCount;
 
                         entity.RemoveComponent<DisplayPreview>();
                         entity.SetComponent(new DisablePreview());

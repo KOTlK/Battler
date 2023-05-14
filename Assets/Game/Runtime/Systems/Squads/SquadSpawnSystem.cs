@@ -1,8 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Game.Runtime.Application;
 using Game.Runtime.Components.Characters;
 using Game.Runtime.Components.Squads;
 using Game.Runtime.Components.Squads.Formations;
+using Game.Runtime.Extensions;
 using Scellecs.Morpeh;
 using Unity.Collections;
 using Unity.IL2CPP.CompilerServices;
@@ -32,12 +35,17 @@ namespace Game.Runtime.Systems.Squads
             {
                 var squadEntity = World.CreateEntity();
                 var localPosition = Vector3.zero;
-                ref var formation = ref squadEntity.AddComponent<RectangleFormation>();
+                var formationPosition = Vector2Int.zero;
+                ref var formation = ref squadEntity.AddComponent<Formation>();
                 ref var squad = ref squadEntity.AddComponent<Squad>();
                 ref var damageBuffer = ref squadEntity.AddComponent<DamageBuffer>();
                 ref var command = ref entity.GetComponent<SpawnSquadCommand>();
 
+                formation.Graph = new FormationGraph();
+                formation.Graph.NeighboursMap = new Dictionary<FormationNode, IEnumerable<FormationNode>>();
+                formation.Graph.AllNodes = new List<FormationNode>();
                 formation.MaxColumns = command.MinColumnsCount;
+                formation.Forward = Vector3.forward;
                 damageBuffer.Buffer = new NativeQueue<float>(Allocator.Persistent);
                 squad.AliveMembers = new List<Entity>();
                 squad.DeadMembers = new List<Entity>();
@@ -61,17 +69,29 @@ namespace Game.Runtime.Systems.Squads
                     spawnCharacterCommand.Damage = command.CharactersDamage;
                     spawnCharacterCommand.Speed = command.CharactersSpeed;
                     spawnCharacterCommand.Position = localPosition + command.Position;
+                    formation.Graph.AllNodes.Add(new FormationNode()
+                    {
+                        Entity = characterEntity,
+                        Position = formationPosition
+                    });
                     squad.AliveMembers.Add(characterEntity);
                     squad.AllMembers[i] = characterEntity;
 
-                    localPosition.x++;
+                    localPosition.x += command.DistanceBetweenUnits;
+                    formationPosition.x++;
+                    if (formationPosition.x >= formation.MaxColumns)
+                    {
+                        formationPosition.x = 0;
+                        formationPosition.y--;
+                    }
                     if (localPosition.x >= formation.MaxColumns)
                     {
                         localPosition.x = 0;
-                        localPosition.z--;
+                        localPosition.z -= command.DistanceBetweenUnits;
                     }
                 }
 
+                formation.Graph.RecalculateMap();
                 entity.RemoveComponent<SpawnSquadCommand>();
             }
         }

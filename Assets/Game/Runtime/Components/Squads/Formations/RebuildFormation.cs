@@ -1,7 +1,6 @@
 ﻿using System;
 using Scellecs.Morpeh;
 using Unity.IL2CPP.CompilerServices;
-using UnityEngine.Serialization;
 
 namespace Game.Runtime.Components.Squads.Formations
 {
@@ -9,8 +8,9 @@ namespace Game.Runtime.Components.Squads.Formations
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     [Il2CppSetOption(Option.DivideByZeroChecks, false)]
-    public struct RectangleFormation : IComponent
+    public struct RebuildFormation : IComponent
     {
-        public int MaxColumns;
+        public int Columns;
+        public FormationType FormationType;
     }
 }

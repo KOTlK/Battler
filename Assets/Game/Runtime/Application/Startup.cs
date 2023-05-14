@@ -7,6 +7,7 @@ using Game.Runtime.Systems.Debug;
 using Game.Runtime.Systems.GameCamera;
 using Game.Runtime.Systems.Squads;
 using Scellecs.Morpeh;
+using TMPro;
 using UnityEngine;
 
 namespace Game.Runtime.Application
@@ -18,6 +19,7 @@ namespace Game.Runtime.Application
         [SerializeField] private MonoHell.View.Characters.CharacterView _characterPrefab;
         [SerializeField] private SelectionArea _view;
         [SerializeField] private DebugDamage _debugDamageView;
+        [SerializeField] private TMP_Text _debugText;
         [SerializeField] private SpawnSquadCommand[] _squadsToSpawn;
         
         private World _world;
@@ -42,18 +44,20 @@ namespace Game.Runtime.Application
             //add initializers
             
             //add update systems
-            systems.AddSystem(new SquadsPlacementSystem(_world, selectedSquads = new SelectedSquads()));
             systems.AddSystem(new CameraInputSystem(_world));
             systems.AddSystem(new CameraMovementSystem(_world, _camera, _config.CameraConfig));
             systems.AddSystem(new SquadSpawnSystem(_world));
             systems.AddSystem(new CharacterSpawnSystem(_world, _config));
+            systems.AddSystem(new SquadsPlacementSystem(_world, selectedSquads = new SelectedSquads()));
             systems.AddSystem(new SelectSquadSystem(_world, _view, selectedSquads));
             systems.AddSystem(new DebugDamageSystem(_world, _debugDamageView));
+            systems.AddSystem(new RebuildFormationSystem(_world));
             systems.AddSystem(new RectangleFormationPreviewSystem(_world));
             systems.AddSystem(new DisablePreviewSystem(_world));
             systems.AddSystem(new RectangleMovementSystem(_world));
             systems.AddSystem(new CharacterMovementSystem(_world));
             systems.AddSystem(new SquadDamageSystem(_world));
+            //systems.AddSystem(new FormationDebugSystem(_world, _debugText));
             systems.AddSystem(new ApplyPreviewPositions(_world));
             
             //add fixed update systems
