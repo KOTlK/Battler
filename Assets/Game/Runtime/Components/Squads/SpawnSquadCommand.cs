@@ -1,16 +1,11 @@
 ﻿using System;
-using Scellecs.Morpeh;
-using Unity.IL2CPP.CompilerServices;
 using UnityEngine;
 using CharacterView = Game.Runtime.MonoHell.View.Characters.CharacterView;
 
 namespace Game.Runtime.Components.Squads
 {
     [Serializable]
-    [Il2CppSetOption(Option.NullChecks, false)]
-    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-    [Il2CppSetOption(Option.DivideByZeroChecks, false)]
-    public struct SpawnSquadCommand : IComponent
+    public struct SpawnSquadCommand
     {
         public CharacterView CharacterPrefab;
         public float CharacterHealth;

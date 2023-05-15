@@ -1,43 +1,43 @@
 ﻿using System;
-using Game.Runtime.Application;
 using Game.Runtime.Components.Characters;
 using Game.Runtime.Components.Characters.Movement;
 using Game.Runtime.Components.Squads;
 using Game.Runtime.Components.Squads.Formations;
-using Scellecs.Morpeh;
-using Unity.IL2CPP.CompilerServices;
+using Leopotam.EcsLite;
+using Leopotam.EcsLite.Di;
 using UnityEngine;
+using Time = Game.Runtime.Application.Time;
 
 namespace Game.Runtime.Systems.Squads
 {
-    [Il2CppSetOption(Option.NullChecks, false)]
-    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-    [Il2CppSetOption(Option.DivideByZeroChecks, false)]
-    public class SquadsPlacementSystem : UpdateSystem
+    public class SquadsPlacementSystem : IEcsRunSystem
     {
         private readonly SelectedSquads _selectedSquads;
         private readonly Camera _camera;
+        
+        private readonly EcsFilterInject<Inc<Squad, Selected>> _selected = default;
+        private readonly EcsCustomInject<Time> _time = default;
+        private readonly EcsPoolInject<Squad> _squads = default;
+        private readonly EcsPoolInject<DisplayPreview> _displayPreviewCommands = default;
+        private readonly EcsPoolInject<DisablePreview> _disablePreviewCommands = default;
+        private readonly EcsPoolInject<Formation> _formations = default;
+        private readonly EcsPoolInject<MoveCommand> _moveCommands = default;
+        private readonly EcsPoolInject<RebuildFormation> _rebuildFormationCommands = default;
 
         private Vector3 _startDragPoint;
-        private Filter _selected;
         private RaycastHit _hit;
         private float _dragTime;
 
         private const float DistanceBetweenSquads = 2f;
         private const float DragThreshold = 0.1f;
 
-        public SquadsPlacementSystem(World world, SelectedSquads selectedSquads) : base(world)
+        public SquadsPlacementSystem(SelectedSquads selectedSquads)
         {
             _selectedSquads = selectedSquads;
             _camera = Camera.main;
         }
 
-        public override void OnAwake()
-        {
-            _selected = World.Filter.With<Squad>().With<Selected>();
-        }
-
-        public override void OnUpdate(float deltaTime)
+        public void Run(IEcsSystems systems)
         {
             if (Input.GetKeyDown(KeyCode.Mouse1))
             {
@@ -51,7 +51,7 @@ namespace Game.Runtime.Systems.Squads
 
             if (Input.GetKey(KeyCode.Mouse1))
             {
-                _dragTime += deltaTime;
+                _dragTime += _time.Value.DeltaTime;
                 var ray = _camera.ScreenPointToRay(Input.mousePosition);
 
                 if (Physics.Raycast(ray, out _hit))
@@ -63,25 +63,24 @@ namespace Game.Runtime.Systems.Squads
                     var position = _startDragPoint;
                     var distancePerSquad = directionPerSquads.magnitude;
 
-                    foreach (var entity in _selected)
+                    foreach (var entity in _selected.Value)
                     {
-                        ref var squad = ref entity.GetComponent<Squad>();
+                        ref var squad = ref _squads.Value.Get(entity);
                         var squadLength = squad.MinColumnsCount * squad.DistanceBetweenUnits;
                         var normalizedDirection = direction.normalized;
                         var maxColumns = squad.MinColumnsCount;
 
                         if (distancePerSquad < squadLength)
                         {
-                            entity.SetComponent(new DisplayPreview()
+                            SetPreview(entity, new DisplayPreview()
                             {
                                 Forward = forward,
                                 StartPosition = position,
                                 FormationType = FormationType.Rectangle,
                                 MaxColumns = maxColumns
                             });
-                            
-                            position += (normalizedDirection * squadLength) +
-                                        normalizedDirection * DistanceBetweenSquads;
+
+                            position += (normalizedDirection * squadLength) + normalizedDirection * DistanceBetweenSquads;
                         }
                         else
                         {
@@ -102,9 +101,9 @@ namespace Game.Runtime.Systems.Squads
                             }
 
                             var totalLength = squad.DistanceBetweenUnits * maxColumns;
-
                             
-                            entity.SetComponent(new DisplayPreview()
+                            
+                            SetPreview(entity, new DisplayPreview()
                             {
                                 Forward = forward,
                                 StartPosition = position,
@@ -122,25 +121,25 @@ namespace Game.Runtime.Systems.Squads
             {
                 if (_dragTime >= DragThreshold)
                 {
-                    foreach (var entity in _selected)
+                    foreach (var entity in _selected.Value)
                     {
-                        ref var command = ref entity.AddComponent<MoveCommand>();
-                        ref var preview = ref entity.GetComponent<DisplayPreview>();
-                        ref var formation = ref entity.GetComponent<Formation>();
+                        ref var command = ref _moveCommands.Value.Add(entity);
+                        ref var preview = ref _displayPreviewCommands.Value.Get(entity);
+                        ref var formation = ref _formations.Value.Get(entity);
 
                         command.Position = preview.StartPosition;
                         command.LookDirection = preview.Forward;
 
                         if (formation.MaxColumns != preview.MaxColumns)
                         {
-                            ref var rebuildCommand = ref entity.AddComponent<RebuildFormation>();
+                            ref var rebuildCommand = ref _rebuildFormationCommands.Value.Add(entity);
                             rebuildCommand.FormationType = FormationType.Rectangle;
                             rebuildCommand.Columns = preview.MaxColumns;
                             formation.Forward = preview.Forward;
                         }
 
-                        entity.RemoveComponent<DisplayPreview>();
-                        entity.AddComponent<DisablePreview>();
+                        _displayPreviewCommands.Value.Del(entity);
+                        _disablePreviewCommands.Value.Add(entity);
                     }
                 }
                 else
@@ -150,12 +149,12 @@ namespace Game.Runtime.Systems.Squads
                     var position = _startDragPoint;
                     forward.y = 0;
 
-                    foreach (var entity in _selected)
+                    foreach (var entity in _selected.Value)
                     {
-                        ref var command = ref entity.AddComponent<MoveCommand>();
-                        ref var rebuildCommand = ref entity.AddComponent<RebuildFormation>();
-                        ref var squad = ref entity.GetComponent<Squad>();
-                        ref var formation = ref entity.GetComponent<Formation>();
+                        ref var command = ref _moveCommands.Value.Add(entity);
+                        ref var rebuildCommand = ref _rebuildFormationCommands.Value.Add(entity);
+                        ref var squad = ref _squads.Value.Get(entity);
+                        ref var formation = ref _formations.Value.Get(entity);
                         var squadLength = squad.MinColumnsCount * squad.DistanceBetweenUnits;
 
                         formation.Forward = forward;
@@ -166,8 +165,8 @@ namespace Game.Runtime.Systems.Squads
                         rebuildCommand.FormationType = FormationType.Rectangle;
                         rebuildCommand.Columns = squad.MinColumnsCount;
 
-                        entity.RemoveComponent<DisplayPreview>();
-                        entity.SetComponent(new DisablePreview());
+                        _displayPreviewCommands.Value.Del(entity);
+                        _disablePreviewCommands.Value.Add(entity);
                         position += right * squadLength + right * DistanceBetweenSquads;
                     }
                 }
@@ -176,9 +175,18 @@ namespace Game.Runtime.Systems.Squads
             }
         }
 
-        public override void Dispose()
+        private void SetPreview(int entity, DisplayPreview targetPreview)
         {
-
+            if (_displayPreviewCommands.Value.Has(entity))
+            {
+                ref var preview = ref _displayPreviewCommands.Value.Get(entity);
+                preview = targetPreview;
+            }
+            else
+            {
+                ref var preview = ref _displayPreviewCommands.Value.Add(entity);
+                preview = targetPreview;
+            }
         }
     }
 }

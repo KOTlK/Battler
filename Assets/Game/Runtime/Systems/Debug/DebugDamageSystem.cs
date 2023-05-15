@@ -1,47 +1,34 @@
-﻿using Game.Runtime.Application;
-using Game.Runtime.Components.Characters;
+﻿using Game.Runtime.Components.Characters;
 using Game.Runtime.Components.Squads;
-using Scellecs.Morpeh;
-using Unity.IL2CPP.CompilerServices;
+using Leopotam.EcsLite;
+using Leopotam.EcsLite.Di;
 using UnityEngine;
 using Random = System.Random;
 
 namespace Game.Runtime.Systems.Debug
 {
-    [Il2CppSetOption(Option.NullChecks, false)]
-    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-    [Il2CppSetOption(Option.DivideByZeroChecks, false)]
-    public class DebugDamageSystem : UpdateSystem
+    public class DebugDamageSystem : IEcsRunSystem
     {
         private readonly DebugDamage _debugDamageView;
-        private Filter _filter;
+        private readonly EcsFilterInject<Inc<Squad, Selected, DamageBuffer>> _filter = default;
+        private readonly EcsPoolInject<DamageBuffer> _damageBuffers = default;
         private readonly Random _random = new Random();
         
-        public DebugDamageSystem(World world, DebugDamage debugDamageView) : base(world)
+        public DebugDamageSystem(DebugDamage debugDamageView)
         {
             _debugDamageView = debugDamageView;
         }
 
-        public override void OnAwake()
-        {
-            _filter = World.Filter.With<Squad>().With<Selected>().With<DamageBuffer>();
-        }
-
-        public override void OnUpdate(float deltaTime)
+        public void Run(IEcsSystems systems)
         {
             if (Input.GetKey(KeyCode.Space))
             {
-                foreach (var entity in _filter)
+                foreach (var entity in _filter.Value)
                 {
-                    ref var buffer = ref entity.GetComponent<DamageBuffer>();
+                    ref var buffer = ref _damageBuffers.Value.Get(entity);
                     buffer.Buffer.Enqueue((float)_random.NextDouble() * float.Parse(_debugDamageView.InputField.text));
                 }
             }
-        }
-
-        public override void Dispose()
-        {
-
         }
     }
 }

@@ -1,50 +1,36 @@
-﻿using Game.Runtime.Application;
-using Game.Runtime.Components.Characters;
+﻿using Game.Runtime.Components.Characters;
 using Game.Runtime.Components.Squads;
-using Scellecs.Morpeh;
-using Unity.IL2CPP.CompilerServices;
+using Leopotam.EcsLite;
+using Leopotam.EcsLite.Di;
 
 namespace Game.Runtime.Systems.Squads
 {
-    [Il2CppSetOption(Option.NullChecks, false)]
-    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-    [Il2CppSetOption(Option.DivideByZeroChecks, false)]
-    public class DisablePreviewSystem : UpdateSystem
+    public class DisablePreviewSystem : IEcsRunSystem
     {
-        private Filter _filter;
-        
-        public DisablePreviewSystem(World world) : base(world)
-        {
-        }
+        private readonly EcsFilterInject<Inc<Squad, DisablePreview>> _filter = default;
+        private readonly EcsPoolInject<Squad> _squads = default;
+        private readonly EcsPoolInject<CharacterPreview> _characterPreviews = default;
+        private readonly EcsPoolInject<EnablePreview> _enablePreivewCommands = default;
+        private readonly EcsPoolInject<DisablePreview> _disablePreviewCommands = default;
 
-        public override void OnAwake()
+        public void Run(IEcsSystems systems)
         {
-            _filter = World.Filter.With<Squad>().With<DisablePreview>();
-        }
-
-        public override void OnUpdate(float deltaTime)
-        {
-            foreach (var entity in _filter)
+            foreach (var entity in _filter.Value)
             {
-                ref var squad = ref entity.GetComponent<Squad>();
+                ref var squad = ref _squads.Value.Get(entity);
 
                 foreach (var characterEntity in squad.AllMembers)
                 {
-                    if (characterEntity.Has<EnablePreview>())
+                    if (_enablePreivewCommands.Value.Has(characterEntity))
                     {
-                        ref var preview = ref characterEntity.GetComponent<CharacterPreview>();
+                        ref var preview = ref _characterPreviews.Value.Get(characterEntity);
                         preview.Instance.Hide();
-                        characterEntity.RemoveComponent<EnablePreview>();
+                        _enablePreivewCommands.Value.Del(characterEntity);
                     }
                 }
 
-                entity.RemoveComponent<DisablePreview>();
+                _disablePreviewCommands.Value.Del(entity);
             }
-        }
-
-        public override void Dispose()
-        {
-
         }
     }
 }

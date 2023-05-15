@@ -1,47 +1,29 @@
-﻿using System;
-using Game.Runtime.Application;
-using Game.Runtime.Components.Characters.Movement;
-using Scellecs.Morpeh;
-using Unity.IL2CPP.CompilerServices;
-using UnityEngine.AI;
+﻿using Game.Runtime.Components.Characters.Movement;
+using Leopotam.EcsLite;
+using Leopotam.EcsLite.Di;
 
 namespace Game.Runtime.Systems.Characters
 {
-    [Il2CppSetOption(Option.NullChecks, false)]
-    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-    [Il2CppSetOption(Option.DivideByZeroChecks, false)]
-    public class CharacterMovementSystem : UpdateSystem
+    public class CharacterMovementSystem : IEcsRunSystem
     {
-        private Filter _characters;
-        
-        public CharacterMovementSystem(World world) : base(world)
-        {
-        }
+        private readonly EcsFilterInject<Inc<MovableCharacter, MoveCommand>> _characters = default;
+        private readonly EcsPoolInject<MovableCharacter> _movableCharacters = default;
+        private readonly EcsPoolInject<MoveCommand> _moveCommands = default;
 
-        public override void OnAwake()
+        public void Run(IEcsSystems systems)
         {
-            _characters = World.Filter.With<MovableCharacter>().With<MoveCommand>();
-        }
-
-        public override void OnUpdate(float deltaTime)
-        {
-            foreach (var entity in _characters)
+            foreach (var entity in _characters.Value)
             {
-                ref var movable = ref entity.GetComponent<MovableCharacter>();
-                ref var command = ref entity.GetComponent<MoveCommand>();
+                ref var movable = ref _movableCharacters.Value.Get(entity);
+                ref var command = ref _moveCommands.Value.Get(entity);
 
                 if (movable.Position != command.Position)
                 {
                     movable.Agent.speed = movable.Speed;
                     movable.Agent.SetDestination(command.Position);
-                    entity.RemoveComponent<MoveCommand>();
+                    _moveCommands.Value.Del(entity);
                 }
             }
-        }
-
-        public override void Dispose()
-        {
-
         }
     }
 }

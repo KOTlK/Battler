@@ -1,12 +1,15 @@
-﻿using Game.Runtime.Components.Characters;
+﻿using Game.Runtime.Components.Camera;
 using Game.Runtime.Components.Squads;
 using Game.Runtime.MonoHell.Configs;
 using Game.Runtime.MonoHell.View.Selection;
+using Game.Runtime.Systems.Application;
 using Game.Runtime.Systems.Characters;
 using Game.Runtime.Systems.Debug;
 using Game.Runtime.Systems.GameCamera;
 using Game.Runtime.Systems.Squads;
-using Scellecs.Morpeh;
+using Leopotam.EcsLite;
+using Leopotam.EcsLite.Di;
+using Leopotam.EcsLite.UnityEditor;
 using TMPro;
 using UnityEngine;
 
@@ -22,69 +25,55 @@ namespace Game.Runtime.Application
         [SerializeField] private TMP_Text _debugText;
         [SerializeField] private SpawnSquadCommand[] _squadsToSpawn;
         
-        private World _world;
+        private EcsWorld _world;
+        private IEcsSystems _systems;
         
         private void Start()
         {
             UnityEngine.Application.targetFrameRate = 120;
-            
-            _world = World.Default;
-            var systems = _world.CreateSystemsGroup();
+
+            _world = new EcsWorld();
+            _systems = new EcsSystems(_world);
+
+            var cameraEntity = _world.NewEntity();
+            _world.GetPool<CameraInput>().Add(cameraEntity);
+
+            var commandsPool = _world.GetPool<SpawnSquadCommand>();
 
             foreach (var squadSpawnCommand in _squadsToSpawn)
             {
-                var spawnEntity = _world.CreateEntity();
+                var spawnEntity = _world.NewEntity();
 
-                ref var command = ref spawnEntity.AddComponent<SpawnSquadCommand>();
+                ref var command = ref commandsPool.Add(spawnEntity);
                 command = squadSpawnCommand;
             }
 
             SelectedSquads selectedSquads;
 
-            //add initializers
-            
-            //add update systems
-            systems.AddSystem(new CameraInputSystem(_world));
-            systems.AddSystem(new CameraMovementSystem(_world, _camera, _config.CameraConfig));
-            systems.AddSystem(new SquadSpawnSystem(_world));
-            systems.AddSystem(new CharacterSpawnSystem(_world, _config));
-            systems.AddSystem(new SquadsPlacementSystem(_world, selectedSquads = new SelectedSquads()));
-            systems.AddSystem(new SelectSquadSystem(_world, _view, selectedSquads));
-            systems.AddSystem(new DebugDamageSystem(_world, _debugDamageView));
-            systems.AddSystem(new RebuildFormationSystem(_world));
-            systems.AddSystem(new RectangleFormationPreviewSystem(_world));
-            systems.AddSystem(new DisablePreviewSystem(_world));
-            systems.AddSystem(new RectangleMovementSystem(_world));
-            systems.AddSystem(new CharacterMovementSystem(_world));
-            systems.AddSystem(new SquadDamageSystem(_world));
-            //systems.AddSystem(new FormationDebugSystem(_world, _debugText));
-            systems.AddSystem(new ApplyPreviewPositions(_world));
-            
-            //add fixed update systems
-            
-            //add late update systems
-            
-            //add cleanup systems
-            
-            
-            _world.AddSystemsGroup(0, systems);
-            _world.UpdateByUnity = false;
+            _systems
+                .Add(new TimeSystem())
+                .Add(new CameraInputSystem())
+                .Add(new CameraMovementSystem())
+                .Add(new SquadSpawnSystem())
+                .Add(new SquadsPlacementSystem(selectedSquads = new SelectedSquads()))
+                .Add(new SelectSquadSystem(_view, selectedSquads))
+                .Add(new DebugDamageSystem(_debugDamageView))
+                .Add(new RebuildFormationSystem())
+                .Add(new RectangleFormationPreviewSystem())
+                .Add(new DisablePreviewSystem())
+                .Add(new RectangleMovementSystem())
+                .Add(new CharacterMovementSystem())
+                .Add(new SquadDamageSystem())
+                //.Add(new FormationDebugSystem(_debugText))
+                .Add(new ApplyPreviewPositions())
+                .Add(new EcsWorldDebugSystem())
+                .Inject(new Time(), _config, _camera)
+                .Init();
         }
 
         private void Update()
         {
-            _world.Update(Time.deltaTime);
-        }
-
-        private void FixedUpdate()
-        {
-            _world.FixedUpdate(Time.fixedDeltaTime);
-        }
-
-        private void LateUpdate()
-        {
-            _world.LateUpdate(Time.deltaTime);
-            _world.CleanupUpdate(Time.deltaTime);
+            _systems.Run();
         }
     }
 }

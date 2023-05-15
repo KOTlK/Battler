@@ -1,38 +1,28 @@
 ﻿using System.Linq;
-using Game.Runtime.Application;
 using Game.Runtime.Components.Characters.Movement;
 using Game.Runtime.Components.Squads;
 using Game.Runtime.Components.Squads.Formations;
 using Game.Runtime.Extensions;
-using Scellecs.Morpeh;
-using Unity.IL2CPP.CompilerServices;
+using Leopotam.EcsLite;
+using Leopotam.EcsLite.Di;
 using UnityEngine;
 
 namespace Game.Runtime.Systems.Squads
 {
-    [Il2CppSetOption(Option.NullChecks, false)]
-    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-    [Il2CppSetOption(Option.DivideByZeroChecks, false)]
-    public class RectangleMovementSystem : UpdateSystem
+    public class RectangleMovementSystem : IEcsRunSystem
     {
-        private Filter _squads;
+        private readonly EcsFilterInject<Inc<Squad, Formation, MoveCommand>> _squadsFilter = default;
+        private readonly EcsPoolInject<Squad> _squads = default;
+        private readonly EcsPoolInject<Formation> _formations = default;
+        private readonly EcsPoolInject<MoveCommand> _moveCommands = default;
 
-        public RectangleMovementSystem(World world) : base(world)
+        public void Run(IEcsSystems systems)
         {
-        }
-
-        public override void OnAwake()
-        {
-            _squads = World.Filter.With<Squad>().With<Formation>().With<MoveCommand>();
-        }
-
-        public override void OnUpdate(float deltaTime)
-        {
-            foreach (var entity in _squads)
+            foreach (var entity in _squadsFilter.Value)
             {
-                ref var squad = ref entity.GetComponent<Squad>();
-                ref var formation = ref entity.GetComponent<Formation>();
-                ref var command = ref entity.GetComponent<MoveCommand>();
+                ref var squad = ref _squads.Value.Get(entity);
+                ref var formation = ref _formations.Value.Get(entity);
+                ref var command = ref _moveCommands.Value.Get(entity);
                 var startPosition = command.Position;
                 var offset = Vector3.Cross(command.LookDirection, Vector3.down).normalized * squad.DistanceBetweenUnits;
                 var forward = command.LookDirection;
@@ -40,18 +30,14 @@ namespace Game.Runtime.Systems.Squads
                 for (var i = 0; i < formation.Graph.AllNodes.Count; i++)
                 {
                     var node = formation.Graph.AllNodes.ElementAt(i);
-                    ref var moveCommand = ref node.Entity.AddComponent<MoveCommand>();
+                    ref var moveCommand = ref _moveCommands.Value.Add(node.Entity);
                     var localPosition = node.Position.FromXZ();
 
                     moveCommand.Position = startPosition + offset * localPosition.x + forward * localPosition.z;
                 }
 
-                entity.RemoveComponent<MoveCommand>();
+                _moveCommands.Value.Del(entity);
             }
-        }
-
-        public override void Dispose()
-        {
         }
     }
 }

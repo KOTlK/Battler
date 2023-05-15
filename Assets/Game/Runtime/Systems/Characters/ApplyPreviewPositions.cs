@@ -1,43 +1,28 @@
-﻿using Game.Runtime.Application;
-using Game.Runtime.Components.Characters;
-using Scellecs.Morpeh;
+﻿using Game.Runtime.Components.Characters;
+using Leopotam.EcsLite;
+using Leopotam.EcsLite.Di;
 using Unity.Burst;
 using Unity.Collections;
-using Unity.IL2CPP.CompilerServices;
 using UnityEngine;
 using UnityEngine.Jobs;
 
 namespace Game.Runtime.Systems.Characters
 {
-    [Il2CppSetOption(Option.NullChecks, false)]
-    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-    [Il2CppSetOption(Option.DivideByZeroChecks, false)]
-    public class ApplyPreviewPositions : UpdateSystem
+    public class ApplyPreviewPositions : IEcsRunSystem, IEcsDestroySystem
     {
-        private Filter _filter;
-        private Stash<CharacterPreview> _previews;
+        private readonly EcsFilterInject<Inc<CharacterPreview, EnablePreview>> _filter = default;
+        private readonly EcsPoolInject<CharacterPreview> _previews = default;
 
-        private NativeArray<Vector3> _positions;
+        private NativeArray<Vector3> _positions = new NativeArray<Vector3>(10000, Allocator.Persistent);
 
-        public ApplyPreviewPositions(World world) : base(world)
-        {
-        }
-
-        public override void OnAwake()
-        {
-            _filter = World.Filter.With<CharacterPreview>().With<EnablePreview>();
-            _previews = World.GetStash<CharacterPreview>();
-            _positions = new NativeArray<Vector3>(10000, Allocator.Persistent);
-        }
-
-        public override void OnUpdate(float deltaTime)
+        public void Run(IEcsSystems systems)
         {
             var index = 0;
             var transformAccess = new TransformAccessArray(10000);
 
-            foreach (var entity in _filter)
+            foreach (var entity in _filter.Value)
             {
-                ref var preview = ref _previews.Get(entity);
+                ref var preview = ref _previews.Value.Get(entity);
                 _positions[index] = preview.Position;
                 transformAccess.Add(preview.Transform);
                 index++;
@@ -56,11 +41,11 @@ namespace Game.Runtime.Systems.Characters
             transformAccess.Dispose();
         }
 
-        public override void Dispose()
+        public void Destroy(IEcsSystems systems)
         {
             _positions.Dispose();
         }
-        
+
         [BurstCompile]
         private struct ApplyTransformJob : IJobParallelForTransform
         {

@@ -1,65 +1,57 @@
-﻿using Game.Runtime.Application;
-using Game.Runtime.Components.Camera;
+﻿using Game.Runtime.Components.Camera;
 using Game.Runtime.MonoHell.Configs;
-using Scellecs.Morpeh;
-using Unity.IL2CPP.CompilerServices;
+using Leopotam.EcsLite;
+using Leopotam.EcsLite.Di;
 using UnityEngine;
+using Time = Game.Runtime.Application.Time;
 
 namespace Game.Runtime.Systems.GameCamera
 {
-    [Il2CppSetOption(Option.NullChecks, false)]
-    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-    [Il2CppSetOption(Option.DivideByZeroChecks, false)]
-    public class CameraMovementSystem : UpdateSystem
+    public class CameraMovementSystem : IEcsRunSystem, IEcsInitSystem
     {
-        private readonly Camera _camera;
-        private readonly CameraConfig _config;
 
-        private Filter _input;
+        private readonly EcsFilterInject<Inc<CameraInput>> _filter = default;
+        private readonly EcsPoolInject<CameraInput> _inputs = default;
+        private readonly EcsCustomInject<Time> _time = default;
+        private readonly EcsCustomInject<Config> _config;
+        private readonly EcsCustomInject<Camera> _camera;
+
         private float _rotationX;
+
         private float _rotationY;
+
         private float _height = 15f;
+
         private RaycastHit _hit;
 
         private const float MaxRotationX = 90f;
+
         private const float MinHeight = 5f;
-        
-        public CameraMovementSystem(World world, Camera camera, CameraConfig config) : base(world)
+
+        public void Init(IEcsSystems systems)
         {
-            _camera = camera;
-            _config = config;
-            _rotationX = camera.transform.rotation.eulerAngles.x;
-            _rotationY = camera.transform.rotation.eulerAngles.y;
+            _rotationX = _camera.Value.transform.rotation.eulerAngles.x;
+            _rotationY = _camera.Value.transform.rotation.eulerAngles.y;
         }
 
-        public override void OnAwake()
+        public void Run(IEcsSystems systems)
         {
-            _input = World.Filter.With<CameraInput>();
-        }
-
-        public override void OnUpdate(float deltaTime)
-        {
-            foreach (var entity in _input)
+            foreach (var entity in _filter.Value)
             {
-                ref var input = ref entity.GetComponent<CameraInput>();
-                var cameraTransform = _camera.transform;
+                ref var input = ref _inputs.Value.Get(entity);
+                var cameraTransform = _camera.Value.transform;
 
-                _height = Mathf.Clamp(_height - input.MovementDirection.y * deltaTime * _config.VerticalSpeed, MinHeight, _config.MaxHeight);
+                _height = Mathf.Clamp(_height - input.MovementDirection.y * _time.Value.DeltaTime * _config.Value.CameraConfig.VerticalSpeed, MinHeight, _config.Value.CameraConfig.MaxHeight);
                 
-                cameraTransform.position = CalculateTotalPosition(cameraTransform, ref input, deltaTime);
+                cameraTransform.position = CalculateTotalPosition(cameraTransform, ref input, _time.Value.DeltaTime);
 
-                _rotationX += input.RotationDirection.x * _config.Sensitivity * deltaTime;
-                _rotationY += input.RotationDirection.y * _config.Sensitivity * deltaTime;
+                _rotationX += input.RotationDirection.x * _config.Value.CameraConfig.Sensitivity * _time.Value.DeltaTime;
+                _rotationY += input.RotationDirection.y * _config.Value.CameraConfig.Sensitivity * _time.Value.DeltaTime;
 
                 _rotationX = Mathf.Clamp(_rotationX, -MaxRotationX, MaxRotationX);
 
                 cameraTransform.rotation = Quaternion.Euler(new Vector3(_rotationX, _rotationY, 0));
             }
-        }
-
-        public override void Dispose()
-        {
-
         }
 
         private Vector3 CalculateTotalPosition(Transform cameraTransform, ref CameraInput input, float deltaTime)
@@ -71,8 +63,8 @@ namespace Game.Runtime.Systems.GameCamera
             forward.y = 0;
             right.y = 0;
 
-            position += forward * input.MovementDirection.z * deltaTime * _config.Speed +
-                                        right * input.MovementDirection.x * deltaTime * _config.Speed;
+            position += forward * input.MovementDirection.z * deltaTime * _config.Value.CameraConfig.Speed +
+                                        right * input.MovementDirection.x * deltaTime * _config.Value.CameraConfig.Speed;
             
             if (Physics.Raycast(cameraTransform.position, Vector3.down, out _hit, Mathf.Infinity))
             {

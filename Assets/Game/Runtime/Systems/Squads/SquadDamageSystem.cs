@@ -1,33 +1,25 @@
-﻿using Game.Runtime.Application;
-using Game.Runtime.Components.Characters;
+﻿using Game.Runtime.Components.Characters;
 using Game.Runtime.Components.Squads;
-using Scellecs.Morpeh;
-using Unity.IL2CPP.CompilerServices;
+using Leopotam.EcsLite;
+using Leopotam.EcsLite.Di;
 
 namespace Game.Runtime.Systems.Squads
 {
-    [Il2CppSetOption(Option.NullChecks, false)]
-    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-    [Il2CppSetOption(Option.DivideByZeroChecks, false)]
-    public class SquadDamageSystem : UpdateSystem
+    public class SquadDamageSystem : IEcsRunSystem
     {
-        private Filter _filter;
-        
-        public SquadDamageSystem(World world) : base(world)
-        {
-        }
+        private readonly EcsFilterInject<Inc<Squad, DamageBuffer>, Exc<Dead>> _filter = default;
+        private readonly EcsPoolInject<Squad> _squads = default;
+        private readonly EcsPoolInject<DamageBuffer> _damageBuffers = default;
+        private readonly EcsPoolInject<Dead> _dead = default;
+        private readonly EcsPoolInject<Health> _healths = default;
+        private readonly EcsPoolInject<CharacterView> _characterViews = default;
 
-        public override void OnAwake()
+        public void Run(IEcsSystems systems)
         {
-            _filter = World.Filter.With<Squad>().With<DamageBuffer>().Without<Dead>();
-        }
-
-        public override void OnUpdate(float deltaTime)
-        {
-            foreach (var entity in _filter)
+            foreach (var entity in _filter.Value)
             {
-                ref var squad = ref entity.GetComponent<Squad>();
-                ref var buffer = ref entity.GetComponent<DamageBuffer>();
+                ref var squad = ref _squads.Value.Get(entity);
+                ref var buffer = ref _damageBuffers.Value.Get(entity);
 
                 if (buffer.Buffer.Count == 0)
                 {
@@ -38,15 +30,15 @@ namespace Game.Runtime.Systems.Squads
 
                 if (aliveCount == 0)
                 {
-                    entity.AddComponent<Dead>();
+                    _dead.Value.Add(entity);
                     continue;
                 }
 
                 if (aliveCount == 1)
                 {
                     var characterEntity = squad.AliveMembers[0];
-                    
-                    ref var health = ref characterEntity.GetComponent<Health>();
+
+                    ref var health = ref _healths.Value.Get(characterEntity);
                     
                     while (health.Current > 0 && buffer.Buffer.Count > 0)
                     {
@@ -55,7 +47,7 @@ namespace Game.Runtime.Systems.Squads
                     
                     if (health.Current <= 0)
                     {
-                        ref var view = ref characterEntity.GetComponent<CharacterView>();
+                        ref var view = ref _characterViews.Value.Get(characterEntity);
                         view.Instance.PlayDeathAnimation();
                         squad.DeadMembers.Add(characterEntity);
                         squad.AliveMembers.RemoveAt(0);
@@ -70,8 +62,8 @@ namespace Game.Runtime.Systems.Squads
                     {
                         break;
                     }
-                    
-                    ref var health = ref characterEntity.GetComponent<Health>();
+
+                    ref var health = ref _healths.Value.Get(characterEntity);
 
                     while (health.Current > 0 && buffer.Buffer.Count > 0)
                     {
@@ -80,18 +72,13 @@ namespace Game.Runtime.Systems.Squads
                     
                     if (health.Current <= 0)
                     {
-                        ref var view = ref characterEntity.GetComponent<CharacterView>();
+                        ref var view = ref _characterViews.Value.Get(characterEntity);
                         view.Instance.PlayDeathAnimation();
                         squad.DeadMembers.Add(characterEntity);
                         squad.AliveMembers.RemoveAt(i);
                     }
                 }
             }
-        }
-
-        public override void Dispose()
-        {
-
         }
     }
 }

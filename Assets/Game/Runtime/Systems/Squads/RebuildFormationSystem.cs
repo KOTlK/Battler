@@ -1,34 +1,23 @@
 ﻿using System.Linq;
-using Game.Runtime.Application;
 using Game.Runtime.Components.Squads.Formations;
-using Scellecs.Morpeh;
-using Unity.IL2CPP.CompilerServices;
+using Leopotam.EcsLite;
+using Leopotam.EcsLite.Di;
 using UnityEngine;
 
 namespace Game.Runtime.Systems.Squads
 {
-    [Il2CppSetOption(Option.NullChecks, false)]
-    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-    [Il2CppSetOption(Option.DivideByZeroChecks, false)]
-    public class RebuildFormationSystem : UpdateSystem
+    public class RebuildFormationSystem : IEcsRunSystem
     {
-        private Filter _filter;
-        
-        public RebuildFormationSystem(World world) : base(world)
-        {
-        }
+        private readonly EcsFilterInject<Inc<Formation, RebuildFormation>> _filter = default;
+        private readonly EcsPoolInject<RebuildFormation> _rebuildFormationCommands = default;
+        private readonly EcsPoolInject<Formation> _formations = default;
 
-        public override void OnAwake()
+        public void Run(IEcsSystems systems)
         {
-            _filter = World.Filter.With<Formation>().With<RebuildFormation>();
-        }
-
-        public override void OnUpdate(float deltaTime)
-        {
-            foreach (var entity in _filter)
+            foreach (var entity in _filter.Value)
             {
-                ref var command = ref entity.GetComponent<RebuildFormation>();
-                ref var formation = ref entity.GetComponent<Formation>();
+                ref var command = ref _rebuildFormationCommands.Value.Get(entity);
+                ref var formation = ref _formations.Value.Get(entity);
 
                 if (command.FormationType == FormationType.Rectangle)
                 {
@@ -54,13 +43,8 @@ namespace Game.Runtime.Systems.Squads
                 }
 
                 formation.Graph.RecalculateMap();
-                entity.RemoveComponent<RebuildFormation>();
+                _rebuildFormationCommands.Value.Del(entity);
             }
-        }
-
-        public override void Dispose()
-        {
-
         }
     }
 }

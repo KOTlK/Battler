@@ -1,12 +1,11 @@
 ﻿using System;
-using Scellecs.Morpeh;
 using UnityEngine;
 
 namespace Game.Runtime.Components.Squads.Formations
 {
     public struct FormationNode : IEquatable<FormationNode>
     {
-        public Entity Entity;
+        public int Entity;
         public Vector2Int Position;
 
         public static FormationNode None = default;

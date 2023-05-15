@@ -1,45 +1,41 @@
 ﻿using System;
-using Game.Runtime.Application;
 using Game.Runtime.Components.Characters;
 using Game.Runtime.Components.Characters.Movement;
 using Game.Runtime.Components.Squads;
 using Game.Runtime.MonoHell.View.Selection;
-using Scellecs.Morpeh;
-using Unity.IL2CPP.CompilerServices;
+using Leopotam.EcsLite;
+using Leopotam.EcsLite.Di;
 using UnityEngine;
+using Time = Game.Runtime.Application.Time;
 
 namespace Game.Runtime.Systems.Squads
 {
-    [Il2CppSetOption(Option.NullChecks, false)]
-    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-    [Il2CppSetOption(Option.DivideByZeroChecks, false)]
-    public class SelectSquadSystem : UpdateSystem
+    public class SelectSquadSystem : IEcsRunSystem
     {
         private readonly SelectionArea _view;
         private readonly SelectedSquads _selectedSquads;
         private readonly Camera _camera;
-        
-        private Filter _unselected;
-        private Filter _selected;
+        private readonly EcsFilterInject<Inc<Squad>, Exc<Selected, Dead>> _unselectedSquadsFilter = default;
+        private readonly EcsFilterInject<Inc<Squad, Selected>> _selectedSquadsFilter = default;
+        private readonly EcsCustomInject<Time> _time = default;
+        private readonly EcsPoolInject<Squad> _squads = default;
+        private readonly EcsPoolInject<Selected> _selected = default;
+        private readonly EcsPoolInject<MovableCharacter> _movableCharacters = default;
+        private readonly EcsPoolInject<CharacterView> _characterViews = default;
+
         private Vector3 _startDrag = Vector3.zero;
         private float _delay = 0;
         
         private const float Threshold = 0.1f;
         
-        public SelectSquadSystem(World world, SelectionArea view, SelectedSquads selectedSquads) : base(world)
+        public SelectSquadSystem(SelectionArea view, SelectedSquads selectedSquads)
         {
             _view = view;
             _selectedSquads = selectedSquads;
             _camera = Camera.main;
         }
 
-        public override void OnAwake()
-        {
-            _unselected = World.Filter.With<Squad>().Without<Selected>().Without<Dead>();
-            _selected = World.Filter.With<Squad>().With<Selected>();
-        }
-
-        public override void OnUpdate(float deltaTime)
+        public void Run(IEcsSystems systems)
         {
             if (Input.GetKeyDown(KeyCode.Mouse0))
             {
@@ -67,7 +63,7 @@ namespace Game.Runtime.Systems.Squads
                 }
                 else
                 {
-                    _delay += deltaTime;
+                    _delay += _time.Value.DeltaTime;
                 }
             }
 
@@ -91,19 +87,19 @@ namespace Game.Runtime.Systems.Squads
                     Math.Abs(endDrag.y - _startDrag.y));
                 var rect = new Area(center, size * 0.5f);
                 
-                foreach (var squadEntity in _unselected)
+                foreach (var squadEntity in _unselectedSquadsFilter.Value)
                 {
-                    ref var squad = ref squadEntity.GetComponent<Squad>();
+                    ref var squad = ref _squads.Value.Get(squadEntity);
 
                     foreach (var characterEntity in squad.AliveMembers)
                     {
-                        ref var movableCharacter = ref characterEntity.GetComponent<MovableCharacter>();
+                        ref var movableCharacter = ref _movableCharacters.Value.Get(characterEntity);
                         var viewportPosition = _camera.WorldToViewportPoint(movableCharacter.Position);
                     
                         if (rect.Contains(viewportPosition))
                         {
                             Select(ref squad);
-                            squadEntity.AddComponent<Selected>();
+                            _selected.Value.Add(squadEntity);
                             _selectedSquads.MinDistance += squad.DistanceBetweenUnits * squad.MinColumnsCount;
                             _selectedSquads.Squads.Add(squad);
                             break;
@@ -116,33 +112,28 @@ namespace Game.Runtime.Systems.Squads
             }
         }
 
-        public override void Dispose()
-        {
-
-        }
-
         private void Select(ref Squad squad)
         {
             foreach (var entity in squad.AliveMembers)
             {
-                ref var view = ref entity.GetComponent<CharacterView>();
+                ref var view = ref _characterViews.Value.Get(entity);
                 view.Instance.Highlight();
             }
         }
 
         private void RemoveSelection()
         {
-            foreach (var entity in _selected)
+            foreach (var entity in _selectedSquadsFilter.Value)
             {
-                ref var squad = ref entity.GetComponent<Squad>();
+                ref var squad = ref _squads.Value.Get(entity);
                 
                 foreach (var characterEntity in squad.AllMembers)
                 {
-                    ref var view = ref characterEntity.GetComponent<CharacterView>();
+                    ref var view = ref _characterViews.Value.Get(characterEntity);
                     view.Instance.StopHighlighting();
                 }
-                
-                entity.RemoveComponent<Selected>();
+
+                _selected.Value.Del(entity);
             }
             _view.Clear();
         }

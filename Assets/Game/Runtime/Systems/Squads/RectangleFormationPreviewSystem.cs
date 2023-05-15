@@ -1,43 +1,27 @@
-﻿using Game.Runtime.Application;
-using Game.Runtime.Components.Characters;
+﻿using Game.Runtime.Components.Characters;
 using Game.Runtime.Components.Squads;
 using Game.Runtime.Components.Squads.Formations;
-using Scellecs.Morpeh;
-using Unity.IL2CPP.CompilerServices;
+using Leopotam.EcsLite;
+using Leopotam.EcsLite.Di;
 using UnityEngine;
 
 namespace Game.Runtime.Systems.Squads
 {
-    [Il2CppSetOption(Option.NullChecks, false)]
-    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-    [Il2CppSetOption(Option.DivideByZeroChecks, false)]
-    public class RectangleFormationPreviewSystem : UpdateSystem
+    public class RectangleFormationPreviewSystem : IEcsRunSystem
     {
-        private Filter _squads;
-        private Stash<CharacterPreview> _characterPreviews;
-        private Stash<Squad> _squadsStash;
-        private Stash<Formation> _formations;
-        private Stash<DisplayPreview> _previews;
+        private readonly EcsFilterInject<Inc<Squad, Formation, DisplayPreview>> _squads = default;
+        private readonly EcsPoolInject<CharacterPreview> _characterPreviews = default;
+        private readonly EcsPoolInject<Squad> _squadsStash = default;
+        private readonly EcsPoolInject<DisplayPreview> _previews = default;
+        private readonly EcsPoolInject<EnablePreview> _enablePreviewCommands = default;
 
-        public RectangleFormationPreviewSystem(World world) : base(world)
-        {
-        }
 
-        public override void OnAwake()
+        public void Run(IEcsSystems systems)
         {
-            _squads = World.Filter.With<Squad>().With<Formation>().With<DisplayPreview>();
-            _squadsStash = World.GetStash<Squad>();
-            _formations = World.GetStash<Formation>();
-            _previews = World.GetStash<DisplayPreview>();
-            _characterPreviews = World.GetStash<CharacterPreview>();
-        }
-
-        public override void OnUpdate(float deltaTime)
-        {
-            foreach (var entity in _squads)
+            foreach (var entity in _squads.Value)
             {
-                ref var squad = ref _squadsStash.Get(entity);
-                ref var command = ref _previews.Get(entity);
+                ref var squad = ref _squadsStash.Value.Get(entity);
+                ref var command = ref _previews.Value.Get(entity);
                 var lookDirection = command.Forward;
                 var startPosition = command.StartPosition;
                 var offset = Vector3.Cross(lookDirection, Vector3.down).normalized * squad.DistanceBetweenUnits;
@@ -48,8 +32,13 @@ namespace Game.Runtime.Systems.Squads
 
                 foreach (var characterEntity in squad.AliveMembers)
                 {
-                    ref var preview = ref _characterPreviews.Get(characterEntity);
-                    characterEntity.SetComponent(new EnablePreview());
+                    ref var preview = ref _characterPreviews.Value.Get(characterEntity);
+                    
+                    if (_enablePreviewCommands.Value.Has(characterEntity) == false)
+                    {
+                        _enablePreviewCommands.Value.Add(characterEntity);
+                    }
+                    
                     if (preview.Instance.Hidden)
                     {
                         preview.Instance.Show();
@@ -67,11 +56,6 @@ namespace Game.Runtime.Systems.Squads
                     }
                 }
             }
-        }
-
-        public override void Dispose()
-        {
-
         }
     }
 }

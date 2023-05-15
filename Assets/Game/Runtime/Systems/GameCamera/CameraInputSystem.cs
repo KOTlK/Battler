@@ -1,33 +1,20 @@
-﻿using System;
-using Game.Runtime.Application;
-using Game.Runtime.Components.Camera;
-using Scellecs.Morpeh;
-using Unity.IL2CPP.CompilerServices;
+﻿using Game.Runtime.Components.Camera;
+using Leopotam.EcsLite;
+using Leopotam.EcsLite.Di;
 using UnityEngine;
 
 namespace Game.Runtime.Systems.GameCamera
 {
-    [Il2CppSetOption(Option.NullChecks, false)]
-    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-    [Il2CppSetOption(Option.DivideByZeroChecks, false)]
-    public class CameraInputSystem : UpdateSystem
+    public class CameraInputSystem : IEcsRunSystem
     {
-        private Filter _filter;
+        private readonly EcsFilterInject<Inc<CameraInput>> _filter = default;
+        private readonly EcsPoolInject<CameraInput> _inputsPool = default;
 
-        public CameraInputSystem(World world) : base(world)
+        public void Run(IEcsSystems systems)
         {
-        }
-
-        public override void OnAwake()
-        {
-            _filter = World.Filter.With<CameraInput>();
-        }
-
-        public override void OnUpdate(float deltaTime)
-        {
-            foreach (var entity in _filter)
+            foreach (var entity in _filter.Value)
             {
-                ref var input = ref entity.GetComponent<CameraInput>();
+                ref var input = ref _inputsPool.Value.Get(entity);
                 var x = Input.GetAxis("Horizontal");
                 var y = Input.GetAxis("Vertical");
                 var scroll = Input.mouseScrollDelta.y;
@@ -44,11 +31,6 @@ namespace Game.Runtime.Systems.GameCamera
                     input.RotationDirection = Vector3.zero;
                 }
             }
-        }
-
-        public override void Dispose()
-        {
-
         }
     }
 }
