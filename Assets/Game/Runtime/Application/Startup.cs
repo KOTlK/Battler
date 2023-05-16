@@ -1,12 +1,12 @@
-﻿using Game.Runtime.Components.Camera;
-using Game.Runtime.Components.Squads;
+﻿using Game.Runtime.Application.Systems;
+using Game.Runtime.Camera.Components;
+using Game.Runtime.Camera.Systems;
+using Game.Runtime.Characters.Systems;
+using Game.Runtime.Debug.Systems;
 using Game.Runtime.MonoHell.Configs;
 using Game.Runtime.MonoHell.View.Selection;
-using Game.Runtime.Systems.Application;
-using Game.Runtime.Systems.Characters;
-using Game.Runtime.Systems.Debug;
-using Game.Runtime.Systems.GameCamera;
-using Game.Runtime.Systems.Squads;
+using Game.Runtime.Squads.Components;
+using Game.Runtime.Squads.Systems;
 using Leopotam.EcsLite;
 using Leopotam.EcsLite.Di;
 using Leopotam.EcsLite.UnityEditor;
@@ -18,7 +18,7 @@ namespace Game.Runtime.Application
     public class Startup : MonoBehaviour
     {
         [SerializeField] private Config _config;
-        [SerializeField] private Camera _camera;
+        [SerializeField] private UnityEngine.Camera _camera;
         [SerializeField] private MonoHell.View.Characters.CharacterView _characterPrefab;
         [SerializeField] private SelectionArea _view;
         [SerializeField] private DebugDamage _debugDamageView;
@@ -48,15 +48,13 @@ namespace Game.Runtime.Application
                 command = squadSpawnCommand;
             }
 
-            SelectedSquads selectedSquads;
-
             _systems
                 .Add(new TimeSystem())
                 .Add(new CameraInputSystem())
                 .Add(new CameraMovementSystem())
                 .Add(new SquadSpawnSystem())
-                .Add(new SquadsPlacementSystem(selectedSquads = new SelectedSquads()))
-                .Add(new SelectSquadSystem(_view, selectedSquads))
+                .Add(new SquadsPlacementSystem())
+                .Add(new SelectSquadSystem(_view))
                 .Add(new DebugDamageSystem(_debugDamageView))
                 .Add(new RebuildFormationSystem())
                 .Add(new RectangleFormationPreviewSystem())
